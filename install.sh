@@ -19,28 +19,37 @@ done
 
 if [ ${#missing_deps[@]} -ne 0 ]; then
     echo "Warning: The following dependencies are missing: ${missing_deps[*]}"
-    echo "Please install them using your package manager (e.g., apt, brew, pacman)."
+    echo "Please install them using your package manager (e.g., apt, brew, pacman) for the full experience."
 else
     echo "All dependencies found."
 fi
 
 # 2. Install Location
 INSTALL_DIR="$HOME/.notat.sh"
-REPO_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/notes_system"
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+REPO_DIR="$SCRIPT_DIR/notes_system"
 
 if [ -d "$INSTALL_DIR" ]; then
     echo "Directory $INSTALL_DIR already exists."
-    read -p "Overwrite? [y/N] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Aborting."
-        exit 1
+    # Check if it's already the correct symlink
+    if [ -L "$INSTALL_DIR" ] && [ "$(readlink "$INSTALL_DIR")" == "$REPO_DIR" ]; then
+        echo "Already installed and linked correctly."
+    else
+        read -p "Overwrite $INSTALL_DIR? [y/N] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Aborting installation."
+            exit 1
+        fi
+        rm -rf "$INSTALL_DIR"
+        echo "Symlinking $REPO_DIR to $INSTALL_DIR..."
+        ln -s "$REPO_DIR" "$INSTALL_DIR"
     fi
-    rm -rf "$INSTALL_DIR"
+else
+    echo "Symlinking $REPO_DIR to $INSTALL_DIR..."
+    ln -s "$REPO_DIR" "$INSTALL_DIR"
 fi
-
-echo "Symlinking $REPO_DIR to $INSTALL_DIR..."
-ln -s "$REPO_DIR" "$INSTALL_DIR"
 
 # 3. Shell Configuration
 SHELL_CONFIG=""
@@ -66,10 +75,12 @@ if [ -n "$SHELL_CONFIG" ] && [ -f "$SHELL_CONFIG" ]; then
         echo "" >> "$SHELL_CONFIG"
         echo "# Notat.sh" >> "$SHELL_CONFIG"
         echo "$SOURCE_LINE" >> "$SHELL_CONFIG"
-        echo "Added to $SHELL_CONFIG. Please restart your shell or run 'source $SHELL_CONFIG'."
+        echo "Added to $SHELL_CONFIG."
+        echo "Please restart your shell or run: source $SHELL_CONFIG"
     fi
 else
-    echo "Could not detect shell config file. Please add the following line manually:"
+    echo "Could not detect shell config file."
+    echo "Please add the following line manually to your shell configuration:"
     echo "source $INSTALL_DIR/init.zsh"
 fi
 
