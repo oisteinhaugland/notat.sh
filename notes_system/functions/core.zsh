@@ -77,7 +77,12 @@ note_find() {
     fi
 
     local selected
-    selected=$(find "$dir" -type f | fzf $NOTES_FZF_OPTS --preview "bat --style=numbers --color=always {}" --preview-window 'right,50%,border-left')
+    # Use fd to find files. 
+    # - . : Search in current directory (which is $dir because we pass it as root)
+    # "$dir" : The root directory to search
+    # --type f : Only files
+    # --color=always : Force color output for fzf
+    selected=$(fd . "$dir" --type f --color=always | fzf $NOTES_FZF_OPTS --preview "bat --style=numbers --color=always {}" --preview-window 'right,50%,border-left')
 
     if [[ -n "$selected" ]]; then
         note_open_editor "$selected"

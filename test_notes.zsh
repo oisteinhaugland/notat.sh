@@ -215,6 +215,20 @@ for alias_name in sd sa st sab saf saa sq sj sp nj np oa; do
     fi
 done
 
+echo "--- Testing Find (fd) ---"
+# Create a dummy file to find
+touch "$NOTES_DAILY_DIR/find_me.md"
+# We can't easily test the interactive fzf part, but we can check if the function runs without error
+# and if we can mock fzf to return a file.
+# For now, let's just check if the alias exists and points to note_find
+if alias fd | grep -q "note_daily_find"; then
+    echo "PASS: Alias fd points to note_daily_find"
+else
+    echo "FAIL: Alias fd incorrect"
+    exit 1
+fi
+
+
 echo "--- Testing Archive Directory ---"
 if [[ -d "$NOTES_ARCHIVE_DIR" ]]; then
     echo "PASS: Archive directory exists at $NOTES_ARCHIVE_DIR"

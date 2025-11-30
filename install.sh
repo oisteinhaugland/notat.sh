@@ -8,7 +8,7 @@ echo "Installing Notat.sh..."
 
 # 1. Check Dependencies
 echo "Checking dependencies..."
-deps=("rg" "fzf" "bat")
+deps=("rg" "fzf" "bat" "fd")
 missing_deps=()
 
 for dep in "${deps[@]}"; do

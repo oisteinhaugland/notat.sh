@@ -105,14 +105,14 @@ Toggle tasks status, archive notes, and create action notes, open links with key
     ./install.sh
     ```
     This script will:
-    - Check for dependencies (`rg`, `fzf`, `bat`).
+    - Check for dependencies (`rg`, `fzf`, `bat`, `fd`).
     - Symlink the system to `~/.notat.sh` (or copy if you prefer).
     - Add the source line to your shell config.
 
 2.  **Manual Installation** (Alternative):
     - Clone: `git clone https://github.com/yourusername/notat.sh.git ~/.notat.sh`
     - Enable: Add `source ~/.notat.sh/init.zsh` to `~/.zshrc` or `~/.bashrc`.
-    - Deps: Install `ripgrep`, `fzf`, and `bat`.
+    - Deps: Install `ripgrep`, `fzf`, `bat`, and `fd`.
 
 ### Getting Started
 1.  **Start your day**: `od` (Open Daily).
