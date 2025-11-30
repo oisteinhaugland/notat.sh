@@ -1,6 +1,6 @@
 # Notat.sh
 
-A simple, terminal-based, keyboard-centric notetaking system for Zsh and Bash.
+A simple, terminal-based, note-taking system.
 
 ## Table of Contents
 - [Motivation](#motivation)
@@ -22,18 +22,28 @@ A simple, terminal-based, keyboard-centric notetaking system for Zsh and Bash.
 ## Motivation
 
 ### Problems
-We all know the feeling. You have a thought, an idea, or a task, and you want to write it down. But where?
-- "Should this go in my 'Work' folder or 'Projects'?"
-- "Do I need to make a new tag for this?"
-- "What should I name this file so I can find it later?"
 
-By the time you've answered these questions, the moment is gone. The friction of *organizing* gets in the way of *doing*.
+Thoughts, ideas, anything noteworthy...
+
+    - Where do you put it?
+    - What should you name it?
+    - How will you find it again?
+   
+Tasks...
+
+    - what was i working on again?
+    - where can i think this through?
+    - where is all the information i need?
+    - do i have any unanswered questions?
+
+This friction gets in the way of writing, thinking and doing.
+
 
 ### Solutions
-**Notat.sh** is built to be your "second brain" that doesn't get in your way.
+
 - **Capture First**: Just get it down. Use `nt` (New Thought) or `nd` (New Daily) to capture instantly.
 - **Trust Search**: Don't worry about where it goes. With powerful search tools built-in, you can always find it later.
-- **Stay in Flow**: Keep your hands on the keyboard and your mind on your work. Structure can wait.
+- **Stay in Flow**: Keep your hands on the keyboard and your mind on your work. 
 
 ## Features
 
@@ -42,7 +52,11 @@ By the time you've answered these questions, the moment is gone. The friction of
 **Notat.sh** is designed to be used entirely from your terminal using short aliases.
 
 ### Powerful search
-Find everything, quickly. The system uses `ripgrep` (rg) for lightning-fast text search across all your notes, and `fzf` for fuzzy finding files by name. Whether you remember a keyword or just a filename, you can find it in milliseconds.
+Find everything, quickly. 
+
+The system uses `ripgrep` (rg) for lightning-fast text search across all your notes, and `fd-find` (fd) with  `fzf` for fuzzy finding files by name.
+
+Whether you remember a keyword or just a filename, you can find it in milliseconds.
 
 ### Task System
 
@@ -144,7 +158,7 @@ Edit `notes_system/config.zsh` to customize:
 - `st`: Search **Thought** notes.
 - `sa`: Search **Active Actions** (top-level `.`, `=`, `>`).
 - `saa`: Search **All Actions** (including indented).
-- `sab`: Search **Backlog** (`,`).
+- `sab`: Search **Action Backlog** (`,`).
 - `saf`: Search **Action Files**.
 - `sq`: Search **Questions** (`?`).
 - `sj`: Search **Journals**.
