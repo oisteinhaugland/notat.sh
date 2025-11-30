@@ -1,136 +1,161 @@
 -- nvim_integration.lua
--- Put this file in your lua path or require it from your init.lua
+-- Put this in your lua path or require from init.lua
 
 local M = {}
 
-local function get_context()
-    local line = vim.api.nvim_get_current_line()
-    local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
-    local filename = vim.fn.expand('%:p')
-    local relative_path = vim.fn.fnamemodify(filename, ':.')
-    return line, row, relative_path
+-- Default config, can be overridden in setup
+M.config = {
+    notes_dir        = os.getenv("NOTES_BASE_DIR")    or (os.getenv("HOME") .. "/notes"),
+    actions_dir      = os.getenv("NOTES_ACTIONS_DIR") or (os.getenv("HOME") .. "/notes/actions"),
+    archive_dir      = os.getenv("NOTES_ARCHIVE_DIR") or nil, -- resolved in setup
+}
+
+-- Normalize paths
+local function norm(...)
+    return vim.fs.normalize(vim.fs.joinpath(...))
 end
 
+-- Get current context
+local function get_context()
+    local row = vim.api.nvim_win_get_cursor(0)[1]
+    local line = vim.api.nvim_get_current_line()
+    local filename = vim.api.nvim_buf_get_name(0)
+    return line, row, filename
+end
+
+-- Smart open function
 function M.smart_open()
     local line, row, filename = get_context()
-    
-    -- Check for Source Link: "@ Source: path/to/file:line"
-    local source_match = line:match("^@ Source: (.*)")
-    if source_match then
-        local file, line_num = source_match:match("([^:]+):(%d+)")
-        if file and line_num then
-            vim.cmd("edit " .. file)
-            vim.cmd(line_num)
+
+    --------------------------------------------------------------------
+    -- 1. Detect @ Source: file:line
+    --------------------------------------------------------------------
+    local src = line:match("^@%s*Source:%s*(.-)%s*$")
+    if src then
+        local file, linen = src:match("^(.-):(%d+)$")
+        if file and linen then
+            vim.cmd.edit(vim.fs.normalize(file))
+            vim.api.nvim_win_set_cursor(0, { tonumber(linen), 0 })
             return
         end
     end
 
-    -- Check for Action Line: starts with symbol
-    local action_match = line:match("^[.,=x>?]%s*(.*)")
-    if action_match then
-        local source = filename .. ":" .. row
-        local clean_title = line:gsub("^[.,=x>?]%s*", "")
-        local safe_title = clean_title:gsub(" ", "_"):gsub("[^%w_%-]", "")
-        
-        local notes_dir = os.getenv("NOTES_ACTIONS_DIR") or (os.getenv("HOME") .. "/notes/actions")
-        local action_file = notes_dir .. "/" .. safe_title .. ".md"
-        
-        -- Create if not exists
-        local f = io.open(action_file, "r")
-        if f then
-            f:close()
-        else
-            f = io.open(action_file, "w")
-            if f then
-                f:write("# ACTION: " .. clean_title .. "\n")
-                f:write("@ Source: " .. source .. "\n")
-                f:close()
-                print("Created action note: " .. action_file)
-            else
-                print("Error creating file: " .. action_file)
-                return
-            end
+    --------------------------------------------------------------------
+    -- 2. Detect Markdown links [text](file:line)
+    --------------------------------------------------------------------
+    local md_file = line:match("%[.-%]%((.-)%)")
+    if md_file then
+        local path, linen = md_file:match("^(.-):(%d+)$")
+        path = path or md_file
+        linen = tonumber(linen) or 1
+        vim.cmd.edit(vim.fs.normalize(path))
+        vim.api.nvim_win_set_cursor(0, { linen, 0 })
+        return
+    end
+
+    --------------------------------------------------------------------
+    -- 3. Detect plain file references file:line
+    --------------------------------------------------------------------
+    local file_ref, linen_ref = line:match("([%w%/%.%-_]+):(%d+)")
+    if file_ref and linen_ref then
+        vim.cmd.edit(vim.fs.normalize(file_ref))
+        vim.api.nvim_win_set_cursor(0, { tonumber(linen_ref), 0 })
+        return
+    end
+
+    --------------------------------------------------------------------
+    -- 4. Detect action lines starting with [.,=x>?]
+    --------------------------------------------------------------------
+    local action_body = line:match("^([.,=x>?])%s*(.*)")
+    if action_body then
+        local symbol, clean = action_body:match("^([.,=x>?])%s*(.*)")
+        clean = clean or ""
+        local safe = clean:gsub(" ", "_"):gsub("[^%w_%-]", "")
+        local action_file = norm(M.config.actions_dir, safe .. ".md")
+
+        if vim.fn.filereadable(action_file) == 0 then
+            vim.fn.mkdir(M.config.actions_dir, "p")
+            vim.fn.writefile({
+                "# ACTION: " .. clean,
+                "@ Source: " .. filename .. ":" .. row,
+                ""
+            }, action_file)
+            vim.notify("Created: " .. action_file, vim.log.levels.INFO)
         end
-        
-        vim.cmd("edit " .. action_file)
+
+        vim.cmd.edit(action_file)
         return
     end
-    
-    print("No action or link found on line.")
+
+    vim.notify("No action or link found on this line.", vim.log.levels.WARN)
 end
 
-function M.toggle_state(target_symbol)
+-- Toggle action state
+function M.toggle_state(target)
     local line = vim.api.nvim_get_current_line()
-    local current_symbol = line:match("^([.,=x>?])")
-    
-    if not current_symbol then
-        print("Not an action line.")
+    local sym = line:match("^([.,=x>?])")
+
+    if not sym then
+        vim.notify("Not an action line.", vim.log.levels.INFO)
         return
     end
-    
-    local new_symbol = target_symbol
-    if current_symbol == target_symbol then
-        new_symbol = "." -- Toggle back to open
-    end
-    
-    local new_line = line:gsub("^" .. current_symbol, new_symbol, 1)
-    vim.api.nvim_set_current_line(new_line)
+
+    local new = (sym == target) and "." or target
+    local updated = new .. line:sub(2)
+    vim.api.nvim_set_current_line(updated)
 end
 
+-- Archive current note
 function M.archive_current_note()
-    local current_file = vim.api.nvim_buf_get_name(0)
-    if current_file == "" then
-        print("No file to archive.")
+    local file = vim.api.nvim_buf_get_name(0)
+    if file == "" then
+        vim.notify("No file to archive.", vim.log.levels.WARN)
         return
     end
 
-    local notes_base = os.getenv("NOTES_BASE_DIR") or (os.getenv("HOME") .. "/notes")
-    local archive_base = os.getenv("NOTES_ARCHIVE_DIR") or (notes_base .. "/archive")
+    local notes = M.config.notes_dir
+    local archive = M.config.archive_dir or norm(notes, "archive")
 
-    -- Check if file is inside notes dir
-    if not current_file:find(notes_base, 1, true) then
-        print("File is not in notes directory.")
+    if not file:find(vim.fs.normalize(notes), 1, true) then
+        vim.notify("File not in notes directory.", vim.log.levels.ERROR)
         return
     end
 
-    -- Determine relative path and type
-    local rel_path = current_file:sub(#notes_base + 2)
-    local type_dir = rel_path:match("^([^/]+)")
-    local filename = rel_path:match("[^/]+$")
-    
-    if not type_dir or not filename then
-        print("Could not determine note type.")
+    local rel = vim.fn.fnamemodify(file, ":p"):sub(#notes + 2)
+    local type_dir = rel:match("^([^/]+)")
+    local name = vim.fn.fnamemodify(file, ":t")
+
+    if not type_dir then
+        vim.notify("Couldn't detect note type.", vim.log.levels.ERROR)
         return
     end
 
-    local target_dir = archive_base .. "/" .. type_dir
-    local target_file = target_dir .. "/" .. filename
+    local target_dir = norm(archive, type_dir)
+    local target_file = norm(target_dir, name)
 
-    -- Create target directory
-    os.execute("mkdir -p " .. target_dir)
+    vim.fn.mkdir(target_dir, "p")
 
-    -- Move file
-    local success, err = os.rename(current_file, target_file)
-    if success then
-        print("Archived to: " .. target_dir .. "/" .. filename)
-        -- We keep the buffer open but it now points to the new location? 
-        -- Actually os.rename moves it on disk. Neovim buffer might get confused or show "file no longer exists".
-        -- Best practice: Rename the buffer to the new location.
-        vim.cmd("file " .. target_file)
-    else
-        print("Error archiving file: " .. err)
+    local ok, err = vim.loop.fs_rename(file, target_file)
+    if not ok then
+        vim.notify("Archive error: " .. err, vim.log.levels.ERROR)
+        return
     end
+
+    vim.api.nvim_buf_set_name(0, target_file)
+    vim.notify("Archived → " .. target_file, vim.log.levels.INFO)
 end
 
-function M.setup()
-    vim.keymap.set('n', '<leader>o', M.smart_open, { noremap = true, silent = true, desc = "Smart Open Action/Link" })
-    vim.keymap.set('n', '<leader>x', function() M.toggle_state('x') end, { noremap = true, silent = true, desc = "Toggle Action Closed" })
-    vim.keymap.set('n', '<leader>a', function() M.toggle_state('=') end, { noremap = true, silent = true, desc = "Toggle Action Active" })
-    vim.keymap.set('n', '<leader>,', function() M.toggle_state(',') end, { noremap = true, silent = true, desc = "Toggle Action Parked" })
-    vim.keymap.set('n', '<leader>q', function() M.toggle_state('?') end, { noremap = true, silent = true, desc = "Toggle Action Question" })
-    
-    -- Archive
-    vim.keymap.set('n', '<leader>A', M.archive_current_note, { noremap = true, silent = true, desc = "Archive Note" })
+-- Setup keymaps
+function M.setup(opts)
+    M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+
+    vim.keymap.set('n', '<leader>o', M.smart_open, { desc = "Smart Open Action/Link" })
+    vim.keymap.set('n', '<leader>x', function() M.toggle_state('x') end, { desc = "Mark Closed" })
+    vim.keymap.set('n', '<leader>a', function() M.toggle_state('=') end, { desc = "Mark Active" })
+    vim.keymap.set('n', '<leader>,', function() M.toggle_state(',') end, { desc = "Mark Parked" })
+    vim.keymap.set('n', '<leader>q', function() M.toggle_state('?') end, { desc = "Mark Question" })
+    vim.keymap.set('n', '<leader>A', M.archive_current_note, { desc = "Archive Note" })
 end
 
 return M
+
