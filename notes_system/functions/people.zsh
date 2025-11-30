@@ -38,5 +38,5 @@ note_people_create() {
 }
 
 note_people_search() { note_search "$NOTES_PEOPLE_DIR"; }
-note_people_find()   { note_pick "$NOTES_PEOPLE_DIR"; }
+note_people_find()   { note_find "$NOTES_PEOPLE_DIR"; }
 note_people_review() { note_review "$NOTES_PEOPLE_DIR"; }

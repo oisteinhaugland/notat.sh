@@ -68,7 +68,7 @@ note_search() {
     fi
 }
 
-note_pick() {
+note_find() {
     local dir="$1"
 
     if ! command -v fzf &> /dev/null; then

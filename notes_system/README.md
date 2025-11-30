@@ -12,7 +12,7 @@ A simple, terminal-based, keyboard-centric notetaking system for Zsh and Bash.
     - [Task System](#task-system)
     - [Automatic organization](#automatic-organization)
     - [Simple Grammar](#simple-grammar)
-    - [Neovim Integration](#neovim-integration)
+
 - [Installation](#installation)
     - [Getting Started](#getting-started)
 - [Configuration](#configuration)
@@ -100,23 +100,19 @@ Toggle tasks status, archive notes, and create action notes, open links with key
 
 ## Installation
 
-1.  **Clone the Repo**:
+1.  **Run the Installer**:
     ```bash
-    git clone https://github.com/yourusername/notat.sh.git ~/.notat.sh
+    ./install.sh
     ```
-    *(Or just copy the folder to your home directory)*
+    This script will:
+    - Check for dependencies (`rg`, `fzf`, `bat`).
+    - Symlink the system to `~/.notat.sh` (or copy if you prefer).
+    - Add the source line to your shell config.
 
-2.  **Enable it**:
-    Add this line to your shell configuration file (`~/.zshrc` for Zsh, `~/.bashrc` for Bash):
-    ```bash
-    source ~/.notat.sh/init.zsh
-    ```
-
-3.  **Install Dependencies**:
-    You need these three tools installed for the magic to work:
-    - `ripgrep` (rg): For lightning fast search.
-    - `fzf`: For the interactive fuzzy finder.
-    - `bat`: For file previews.
+2.  **Manual Installation** (Alternative):
+    - Clone: `git clone https://github.com/yourusername/notat.sh.git ~/.notat.sh`
+    - Enable: Add `source ~/.notat.sh/init.zsh` to `~/.zshrc` or `~/.bashrc`.
+    - Deps: Install `ripgrep`, `fzf`, and `bat`.
 
 ### Getting Started
 1.  **Start your day**: `od` (Open Daily).
@@ -155,13 +151,13 @@ Edit `notes_system/config.zsh` to customize:
 - `sp`: Search **People**.
 - `sr`: Search **Resources**.
 
-### Pick (File Finder)
-- `pd`: Pick Daily note.
-- `pt`: Pick Thought note.
-- `pa`: Pick Action note.
-- `pj`: Pick Journal.
-- `pp`: Pick Person.
-- `pr`: Pick Resource.
+### Find (File Finder)
+- `fd`: Find Daily note.
+- `ft`: Find Thought note.
+- `fa`: Find Action note.
+- `fj`: Find Journal.
+- `fp`: Find Person.
+- `fr`: Find Resource.
 
 ### Review (Interactive Loop)
 - `rd`: Review Daily notes.
