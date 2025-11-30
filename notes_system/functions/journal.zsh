@@ -38,5 +38,5 @@ note_journal_create() {
 }
 
 note_journal_search() { note_search "$NOTES_JOURNALS_DIR"; }
-note_journal_pick()   { note_pick "$NOTES_JOURNALS_DIR"; }
+note_journal_find()   { note_pick "$NOTES_JOURNALS_DIR"; }
 note_journal_review() { note_review "$NOTES_JOURNALS_DIR"; }

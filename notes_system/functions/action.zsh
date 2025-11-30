@@ -57,7 +57,7 @@ note_action_create() {
 }
 
 note_action_search() { note_search "$NOTES_ACTIONS_DIR"; }
-note_action_pick()   { note_pick "$NOTES_ACTIONS_DIR"; }
+note_action_find()   { note_pick "$NOTES_ACTIONS_DIR"; }
 note_action_review() { note_review "$NOTES_ACTIONS_DIR"; }
 
 note_action_open_active() {

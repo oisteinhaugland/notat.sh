@@ -130,7 +130,7 @@ function M.setup()
     vim.keymap.set('n', '<leader>q', function() M.toggle_state('?') end, { noremap = true, silent = true, desc = "Toggle Action Question" })
     
     -- Archive
-    vim.keymap.set('n', '<leader>-', M.archive_current_note, { noremap = true, silent = true, desc = "Archive Note" })
+    vim.keymap.set('n', '<leader>A', M.archive_current_note, { noremap = true, silent = true, desc = "Archive Note" })
 end
 
 return M

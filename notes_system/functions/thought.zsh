@@ -16,5 +16,5 @@ note_thought_create() {
 }
 
 note_thought_search() { note_search "$NOTES_THOUGHTS_DIR"; }
-note_thought_pick()   { note_pick "$NOTES_THOUGHTS_DIR"; }
+note_thought_find()   { note_pick "$NOTES_THOUGHTS_DIR"; }
 note_thought_review() { note_review "$NOTES_THOUGHTS_DIR"; }

@@ -38,5 +38,5 @@ note_resource_create() {
 }
 
 note_resource_search() { note_search "$NOTES_RESOURCES_DIR"; }
-note_resource_pick()   { note_pick "$NOTES_RESOURCES_DIR"; }
+note_resource_find()   { note_pick "$NOTES_RESOURCES_DIR"; }
 note_resource_review() { note_review "$NOTES_RESOURCES_DIR"; }
