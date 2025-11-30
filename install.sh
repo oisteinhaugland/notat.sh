@@ -1,87 +1,209 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # Notat.sh Installer
+set -euo pipefail
 
-set -e
+############################################################
+# Flags & Defaults
+############################################################
+FORCE=false
+QUIET=false
+DRY_RUN=false
 
-echo "Installing Notat.sh..."
+# Install location (XDG-compliant)
+XDG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+INSTALL_DIR="$XDG_DIR/notat.sh"
 
-# 1. Check Dependencies
-echo "Checking dependencies..."
-deps=("rg" "fzf" "bat" "fd")
-missing_deps=()
-
-for dep in "${deps[@]}"; do
-    if ! command -v "$dep" &> /dev/null; then
-        missing_deps+=("$dep")
-    fi
-done
-
-if [ ${#missing_deps[@]} -ne 0 ]; then
-    echo "Warning: The following dependencies are missing: ${missing_deps[*]}"
-    echo "Please install them using your package manager (e.g., apt, brew, pacman) for the full experience."
-else
-    echo "All dependencies found."
-fi
-
-# 2. Install Location
-INSTALL_DIR="$HOME/.notat.sh"
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Script/repo location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$SCRIPT_DIR/notes_system"
 
-if [ -d "$INSTALL_DIR" ]; then
-    echo "Directory $INSTALL_DIR already exists."
-    # Check if it's already the correct symlink
-    if [ -L "$INSTALL_DIR" ] && [ "$(readlink "$INSTALL_DIR")" == "$REPO_DIR" ]; then
-        echo "Already installed and linked correctly."
+LOGFILE="$INSTALL_DIR/install.log"
+
+############################################################
+# Color support
+############################################################
+use_color=true
+if [[ ! -t 1 || -n "${NO_COLOR:-}" || "$QUIET" = true ]]; then
+    use_color=false
+fi
+
+color() {
+    local code="$1"; shift
+    $use_color && printf "\033[%sm%s\033[0m\n" "$code" "$*" || printf "%s\n" "$*"
+}
+
+info()  { color "36" "$@"; }  # cyan
+ok()    { color "32" "$@"; }  # green
+warn()  { color "33" "$@"; }  # yellow
+error() { color "31" "$@"; }  # red
+
+say() { $QUIET || echo "$@"; }
+
+############################################################
+# run-or-simulate wrapper for DRY-RUN
+############################################################
+do() {
+    local cmd="$*"
+    $QUIET || echo "+ $cmd"
+    $DRY_RUN || eval "$cmd"
+}
+
+############################################################
+# Help
+############################################################
+show_help() {
+cat <<EOF
+Notat.sh Installer
+
+Usage: ./install.sh [options]
+
+Options:
+  -f, --force      Overwrite without asking
+  -q, --quiet      Suppress output (still logs to file)
+      --dry-run    Show actions without executing
+  -h, --help       Show help
+
+EOF
+}
+
+############################################################
+# Parse Flags
+############################################################
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -f|--force) FORCE=true ;;
+        -q|--quiet) QUIET=true ;;
+        --dry-run)  DRY_RUN=true ;;
+        -h|--help)  show_help; exit 0 ;;
+        *) error "Unknown option: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+############################################################
+# Startup
+############################################################
+say "Installing Notat.sh..."
+mkdir -p "$INSTALL_DIR"
+
+# Start logging
+exec > >(tee -a "$LOGFILE") 2>&1
+
+############################################################
+# Validate REPO_DIR
+############################################################
+if [[ ! -d "$REPO_DIR" ]]; then
+    error "Repository directory not found: $REPO_DIR"
+    exit 1
+fi
+
+############################################################
+# Dependency Check (non-fatal)
+############################################################
+check_deps() {
+    say "Checking dependencies..."
+    local deps=(rg fzf bat fd)
+    local missing=()
+
+    for dep in "${deps[@]}"; do
+        command -v "$dep" >/dev/null 2>&1 || missing+=("$dep")
+    done
+
+    if (( ${#missing[@]} )); then
+        warn "Missing dependencies: ${missing[*]}"
+        warn "Install them manually for full functionality."
     else
-        read -p "Overwrite $INSTALL_DIR? [y/N] " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "Aborting installation."
-            exit 1
+        ok "All dependencies found."
+    fi
+}
+
+check_deps
+
+############################################################
+# Ensure symlink with backup handling
+############################################################
+ensure_symlink() {
+    # If a file/directory exists and is NOT correct symlink
+    if [[ -e "$INSTALL_DIR" && ! -L "$INSTALL_DIR" ]]; then
+        if ! $FORCE; then
+            read -rp "Directory exists. Overwrite? [y/N] " ans
+            [[ "$ans" =~ ^[Yy]$ ]] || { warn "Aborting."; exit 1; }
         fi
-        rm -rf "$INSTALL_DIR"
-        echo "Symlinking $REPO_DIR to $INSTALL_DIR..."
-        ln -s "$REPO_DIR" "$INSTALL_DIR"
-    fi
-else
-    echo "Symlinking $REPO_DIR to $INSTALL_DIR..."
-    ln -s "$REPO_DIR" "$INSTALL_DIR"
-fi
 
-# 3. Shell Configuration
-SHELL_CONFIG=""
-if [ -n "$ZSH_VERSION" ]; then
-    SHELL_CONFIG="$HOME/.zshrc"
-elif [ -n "$BASH_VERSION" ]; then
-    SHELL_CONFIG="$HOME/.bashrc"
-else
-    # Detect based on default shell
-    if [[ "$SHELL" == */zsh ]]; then
-        SHELL_CONFIG="$HOME/.zshrc"
-    elif [[ "$SHELL" == */bash ]]; then
-        SHELL_CONFIG="$HOME/.bashrc"
+        backup="${INSTALL_DIR}.backup.$(date +%s)"
+        warn "Backing up existing directory to $backup"
+        do mv "$INSTALL_DIR" "$backup"
+        do mkdir -p "$INSTALL_DIR"
     fi
-fi
 
-if [ -n "$SHELL_CONFIG" ] && [ -f "$SHELL_CONFIG" ]; then
-    SOURCE_LINE="source $INSTALL_DIR/init.zsh"
-    if grep -Fq "$SOURCE_LINE" "$SHELL_CONFIG"; then
-        echo "Configuration already present in $SHELL_CONFIG"
+    # If it's a symlink but to the wrong place
+    if [[ -L "$INSTALL_DIR" ]]; then
+        if [[ "$(readlink "$INSTALL_DIR")" == "$REPO_DIR" ]]; then
+            ok "Symlink already correct."
+            return
+        else
+            warn "Replacing incorrect symlink."
+            do rm "$INSTALL_DIR"
+        fi
+    fi
+
+    # Create correct symlink
+    do ln -s "$REPO_DIR" "$INSTALL_DIR"
+    ok "Linked: $INSTALL_DIR → $REPO_DIR"
+}
+
+ensure_symlink
+
+############################################################
+# Detect Shell and Config File
+############################################################
+detect_shell_config() {
+    if [[ -n "${ZSH_VERSION:-}" ]]; then echo "$HOME/.zshrc" && return; fi
+    if [[ -n "${BASH_VERSION:-}" ]]; then echo "$HOME/.bashrc" && return; fi
+
+    case "${SHELL:-}" in
+        */zsh)  echo "$HOME/.zshrc";;
+        */bash) echo "$HOME/.bashrc";;
+        */fish) echo "$HOME/.config/fish/config.fish";;
+        *) echo "";;
+    esac
+}
+
+CONFIG_FILE="$(detect_shell_config)"
+
+############################################################
+# Add source line idempotently
+############################################################
+add_source_line() {
+    local file="$1"
+    local shell="$(basename "$file")"
+    local line=""
+
+    case "$shell" in
+        .zshrc|.bashrc) line="source \"$INSTALL_DIR/init.zsh\"" ;;
+        config.fish)    line="source \"$INSTALL_DIR/init.fish\"" ;;
+        *) return ;;
+    esac
+
+    [[ ! -w "$file" ]] && { warn "Cannot write to $file"; return; }
+
+    if grep -Fq "$line" "$file"; then
+        ok "Config already present in $file"
     else
-        echo "Adding source line to $SHELL_CONFIG..."
-        echo "" >> "$SHELL_CONFIG"
-        echo "# Notat.sh" >> "$SHELL_CONFIG"
-        echo "$SOURCE_LINE" >> "$SHELL_CONFIG"
-        echo "Added to $SHELL_CONFIG."
-        echo "Please restart your shell or run: source $SHELL_CONFIG"
+        do "printf \"\n# Notat.sh\n%s\n\" \"$line\" >> \"$file\""
+        ok "Added to $file"
     fi
+}
+
+if [[ -n "$CONFIG_FILE" && -f "$CONFIG_FILE" ]]; then
+    add_source_line "$CONFIG_FILE"
 else
-    echo "Could not detect shell config file."
-    echo "Please add the following line manually to your shell configuration:"
-    echo "source $INSTALL_DIR/init.zsh"
+    warn "Shell config not detected. Add manually:"
+    warn "source \"$INSTALL_DIR/init.zsh\""
 fi
 
-echo "Installation complete!"
+ok "Installation complete!"
+say "Restart your shell or run: source \"$CONFIG_FILE\""
+
+exit 0
+
