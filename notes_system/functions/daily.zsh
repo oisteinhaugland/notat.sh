@@ -16,6 +16,6 @@ note_daily_create() {
 }
 
 note_daily_search() { note_search "$NOTES_DAILY_DIR"; }
-note_daily_find()   { note_find "$NOTES_DAILY_DIR"; }
-note_daily_review() { note_review "$NOTES_DAILY_DIR"; }
+note_daily_pick()   { note_pick "$NOTES_DAILY_DIR"; }
+note_daily_review() { note_review_file "$NOTES_DAILY_DIR"; }
 note_daily_open_today() { note_daily_create; }

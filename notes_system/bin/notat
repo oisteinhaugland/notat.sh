@@ -1,0 +1,109 @@
+#!/bin/bash
+# notat - Unified CLI for Notat.sh
+
+# Resolve symlink to find the real location of the script
+REAL_SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$REAL_SCRIPT_PATH")"
+SYSTEM_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Source the system
+# We need to source config and functions. 
+# Since this is bash, and the functions are zsh-compatible but mostly posix, 
+# we need to be careful. Ideally, the functions should be POSIX compliant or we run this with zsh.
+# Given the user uses zsh, we should probably execute this with zsh if possible, 
+# or ensure the functions are bash compatible. 
+# The functions use `local` which is supported in bash.
+# They use `[[ ]]` which is supported in bash.
+# They use `command -v` which is supported in bash.
+# So bash should be fine.
+
+source "$SYSTEM_DIR/config.zsh"
+for func in "$SYSTEM_DIR/functions/"*.zsh; do
+    source "$func"
+done
+
+usage() {
+    echo "Usage: notat <command> [args]"
+    echo ""
+    echo "Commands:"
+    echo "  new <type> [name]   Create a new note (daily, journal, people, resource, thought, action)"
+    echo "  search <type>       Search notes of a specific type"
+    echo "  pick <type>         Pick (find) a note file"
+    echo "  review <type>       Review notes interactively"
+    echo "  health              Run system health check"
+    echo "  help                Show this help"
+    echo ""
+    echo "Types:"
+    echo "  daily, journal, people, resource, thought, action"
+}
+
+cmd="$1"
+shift || cmd="help"
+
+case "$cmd" in
+    new|n)
+        type="$1"
+        shift || { echo "Error: Missing type."; usage; exit 1; }
+        func="note_${type}_create"
+        if command -v "$func" &> /dev/null; then
+            "$func" "$@"
+        else
+            echo "Error: Unknown type '$type'."
+            exit 1
+        fi
+        ;;
+    search|s)
+        type="$1"
+        shift || { echo "Error: Missing type."; usage; exit 1; }
+        # Handle action-note special case
+        if [[ "$type" == "action-note" ]]; then
+            note_action_note_search "$@"
+        else
+            func="note_${type}_search"
+            if command -v "$func" &> /dev/null; then
+                "$func" "$@"
+            else
+                echo "Error: Unknown type '$type'."
+                exit 1
+            fi
+        fi
+        ;;
+    pick|p)
+        type="$1"
+        shift || { echo "Error: Missing type."; usage; exit 1; }
+        func="note_${type}_pick"
+        if command -v "$func" &> /dev/null; then
+            "$func" "$@"
+        else
+            echo "Error: Unknown type '$type'."
+            exit 1
+        fi
+        ;;
+    review|r)
+        type="$1"
+        shift || { echo "Error: Missing type."; usage; exit 1; }
+        # Handle action-note special case
+        if [[ "$type" == "action-note" ]]; then
+            note_action_note_review "$@"
+        else
+            func="note_${type}_review"
+            if command -v "$func" &> /dev/null; then
+                "$func" "$@"
+            else
+                echo "Error: Unknown type '$type'."
+                exit 1
+            fi
+        fi
+        ;;
+    health)
+        notat_health
+        ;;
+    help|--help|-h)
+        usage
+        ;;
+    *)
+        echo "Error: Unknown command '$cmd'."
+        usage
+        exit 1
+        ;;
+esac

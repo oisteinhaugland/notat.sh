@@ -40,9 +40,9 @@ error() { color "31" "$@"; }  # red
 say() { $QUIET || echo "$@"; }
 
 ############################################################
-# run-or-simulate wrapper for DRY-RUN
+# run_cmd wrapper for DRY-RUN
 ############################################################
-do() {
+run_cmd() {
     local cmd="$*"
     $QUIET || echo "+ $cmd"
     $DRY_RUN || eval "$cmd"
@@ -126,14 +126,14 @@ ensure_symlink() {
     # If a file/directory exists and is NOT correct symlink
     if [[ -e "$INSTALL_DIR" && ! -L "$INSTALL_DIR" ]]; then
         if ! $FORCE; then
-            read -rp "Directory exists. Overwrite? [y/N] " ans
+            read -rp "Directory exists at $INSTALL_DIR. Overwrite? [y/N] " ans
             [[ "$ans" =~ ^[Yy]$ ]] || { warn "Aborting."; exit 1; }
         fi
 
         backup="${INSTALL_DIR}.backup.$(date +%s)"
         warn "Backing up existing directory to $backup"
-        do mv "$INSTALL_DIR" "$backup"
-        do mkdir -p "$INSTALL_DIR"
+        run_cmd mv "$INSTALL_DIR" "$backup"
+        run_cmd mkdir -p "$INSTALL_DIR"
     fi
 
     # If it's a symlink but to the wrong place
@@ -143,12 +143,12 @@ ensure_symlink() {
             return
         else
             warn "Replacing incorrect symlink."
-            do rm "$INSTALL_DIR"
+            run_cmd rm "$INSTALL_DIR"
         fi
     fi
 
     # Create correct symlink
-    do ln -s "$REPO_DIR" "$INSTALL_DIR"
+    run_cmd ln -s "$REPO_DIR" "$INSTALL_DIR"
     ok "Linked: $INSTALL_DIR → $REPO_DIR"
 }
 
@@ -190,7 +190,7 @@ add_source_line() {
     if grep -Fq "$line" "$file"; then
         ok "Config already present in $file"
     else
-        do "printf \"\n# Notat.sh\n%s\n\" \"$line\" >> \"$file\""
+        run_cmd "printf \"\n# Notat.sh\n%s\n\" \"$line\" >> \"$file\""
         ok "Added to $file"
     fi
 }
@@ -200,6 +200,19 @@ if [[ -n "$CONFIG_FILE" && -f "$CONFIG_FILE" ]]; then
 else
     warn "Shell config not detected. Add manually:"
     warn "source \"$INSTALL_DIR/init.zsh\""
+fi
+
+############################################################
+# Neovim Setup Prompt
+############################################################
+echo ""
+read -rp "Do you want to set up Neovim integration? [y/N] " nvim_ans
+if [[ "$nvim_ans" =~ ^[Yy]$ ]]; then
+    if [[ -f "$REPO_DIR/setup_nvim.sh" ]]; then
+        run_cmd "$REPO_DIR/setup_nvim.sh"
+    else
+        warn "setup_nvim.sh not found."
+    fi
 fi
 
 ok "Installation complete!"

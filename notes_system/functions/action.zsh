@@ -48,34 +48,59 @@ note_action_create() {
         read title
     fi
     
-    if [[ -z "$title" ]]; then
-        echo "Error: Title cannot be empty."
-        return 1
+    # Sanitize first to check if it results in empty string
+    local safe_title=$(note_action_sanitize_title "$title")
+    
+    if [[ -z "$safe_title" ]]; then
+        # If title was just symbols or empty, prompt again or error
+        echo "Error: Title cannot be empty or just symbols."
+        echo -n "Enter valid action title: "
+        read title
+        safe_title=$(note_action_sanitize_title "$title")
+        
+        if [[ -z "$safe_title" ]]; then
+             echo "Error: Invalid title."
+             return 1
+        fi
     fi
 
     note_action_create_with_title "$title" "$source"
 }
 
-note_action_search() { note_search "$NOTES_ACTIONS_DIR"; }
-note_action_find()   { note_find "$NOTES_ACTIONS_DIR"; }
-note_action_review() { note_review "$NOTES_ACTIONS_DIR"; }
+# Inline Actions (The default "Action")
+note_action_search() { 
+    # Search for lines starting with action symbols
+    note_search "$NOTES_BASE_DIR" "^[.=>?,]" 
+}
+
+note_action_review() { 
+    # Review lines starting with action symbols (Looped)
+    note_review_inline "$NOTES_BASE_DIR" "^[.=>?,]" 
+}
+
+# Action Notes (The files in actions/)
+note_action_pick() { 
+    note_pick "$NOTES_ACTIONS_DIR" 
+}
+
+note_action_note_search() { 
+    note_search "$NOTES_ACTIONS_DIR" 
+}
+
+note_action_note_review() { 
+    note_review_file "$NOTES_ACTIONS_DIR" 
+}
 
 note_action_open_active() {
-    if ! command -v rg &> /dev/null; then
-        echo "Error: rg (ripgrep) is not installed."
-        return 1
-    fi
-
-    # Find the first line starting with "= "
-    local match=$(rg --line-number --no-heading --color=never --smart-case "^= " "$NOTES_BASE_DIR" | head -n 1)
+    # Find first active task (=) and open it
+    local active
+    active=$(rg --line-number --no-heading --color=never "^= " "$NOTES_BASE_DIR" | head -n 1)
     
-    if [[ -n "$match" ]]; then
-        local file=$(echo "$match" | cut -d: -f1)
-        local line=$(echo "$match" | cut -d: -f2)
-        echo "Opening active task: $file:$line"
-        "$EDITOR" "+$line" "$file"
+    if [[ -n "$active" ]]; then
+        local file=$(echo "$active" | cut -d: -f1)
+        local line=$(echo "$active" | cut -d: -f2)
+        note_open_editor "$file" "$line"
     else
-        echo "No active task found."
-        return 1
+        echo "No active tasks found."
     fi
 }

@@ -24,6 +24,7 @@ local function get_context()
 end
 
 -- Smart open function
+-- Smart open function
 function M.smart_open()
     local line, row, filename = get_context()
 
@@ -66,34 +67,62 @@ function M.smart_open()
     --------------------------------------------------------------------
     -- 4. Detect action lines starting with [.,=x>?]
     --------------------------------------------------------------------
-    local action_body = line:match("^([.,=x>?])%s*(.*)")
-    if action_body then
-        local symbol, clean = action_body:match("^([.,=x>?])%s*(.*)")
-        clean = clean or ""
-        local safe = clean:gsub(" ", "_"):gsub("[^%w_%-]", "")
-        local action_file = norm(M.config.actions_dir, safe .. ".md")
-
-        if vim.fn.filereadable(action_file) == 0 then
-            vim.fn.mkdir(M.config.actions_dir, "p")
-            vim.fn.writefile({
-                "# ACTION: " .. clean,
-                "@ Source: " .. filename .. ":" .. row,
-                ""
-            }, action_file)
-            vim.notify("Created: " .. action_file, vim.log.levels.INFO)
+    -- Fix: Allow whitespace before symbol (^%s*)
+    -- Fix: Capture both symbol and text correctly
+    local symbol, text = line:match("^%s*([.,=x>?])%s*(.*)")
+    
+    if symbol then
+        local clean = text or ""
+        -- Trim trailing whitespace
+        clean = clean:gsub("%s+$", "")
+        
+        -- If title is empty, prompt user
+        if clean == "" then
+            vim.ui.input({ prompt = "Enter action title: " }, function(input)
+                if input and input ~= "" then
+                    M.create_action_note(input, filename, row)
+                else
+                    vim.notify("Action creation cancelled (empty title).", vim.log.levels.WARN)
+                end
+            end)
+            return
         end
 
-        vim.cmd.edit(action_file)
+        M.create_action_note(clean, filename, row)
         return
     end
 
     vim.notify("No action or link found on this line.", vim.log.levels.WARN)
 end
 
+function M.create_action_note(title, source_file, source_row)
+    local safe = title:gsub(" ", "_"):gsub("[^%w_%-]", "")
+    -- Fallback if safe title is empty (e.g. title was just symbols)
+    if safe == "" then
+        safe = "Untitled_Action_" .. os.time()
+    end
+    
+    local action_file = norm(M.config.actions_dir, safe .. ".md")
+
+    if vim.fn.filereadable(action_file) == 0 then
+        vim.fn.mkdir(M.config.actions_dir, "p")
+        vim.fn.writefile({
+            "# ACTION: " .. title,
+            "@ Source: " .. source_file .. ":" .. source_row,
+            ""
+        }, action_file)
+        vim.notify("Created: " .. action_file, vim.log.levels.INFO)
+    end
+
+    vim.cmd.edit(action_file)
+end
+
+-- Toggle action state
 -- Toggle action state
 function M.toggle_state(target)
     local line = vim.api.nvim_get_current_line()
-    local sym = line:match("^([.,=x>?])")
+    -- Fix: Allow whitespace before symbol
+    local sym = line:match("^%s*([.,=x>?])")
 
     if not sym then
         vim.notify("Not an action line.", vim.log.levels.INFO)
@@ -101,7 +130,8 @@ function M.toggle_state(target)
     end
 
     local new = (sym == target) and "." or target
-    local updated = new .. line:sub(2)
+    -- Replace the first occurrence of the symbol
+    local updated = line:gsub(sym, new, 1)
     vim.api.nvim_set_current_line(updated)
 end
 

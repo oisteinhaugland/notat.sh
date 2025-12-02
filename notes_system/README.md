@@ -185,14 +185,32 @@ Edit `notes_system/config.zsh` to customize:
 - `od`: Open today's daily note (same as `nd`).
 - `oa`: **Open Active**. Opens the first active task (`=`).
 
+## Health Check
+
+Run `notat_health` to verify your installation, dependencies, and configuration.
+
+```bash
+notat_health
+```
+
 ## Neovim Integration
 
-Add this to your `init.lua`:
+The installer can set this up for you automatically.
 
-```lua
-local notes = require('notes_system.nvim_integration')
-notes.setup()
-```
+To set it up manually:
+
+1.  Symlink `notes_system/nvim_integration.lua` to `~/.config/nvim/lua/notat.lua`.
+2.  Create `~/.config/nvim/lua/notat_config.lua` with:
+    ```lua
+    require('notat').setup({
+        notes_dir = os.getenv('NOTES_BASE_DIR'),
+        actions_dir = os.getenv('NOTES_ACTIONS_DIR'),
+    })
+    ```
+3.  Add `require('notat_config')` to your `init.lua`.
+
+> [!IMPORTANT]
+> Do **NOT** source `init.lua` in your shell (bash/zsh). It is a Neovim configuration file.
 
 ### Keybindings
 - `<leader>o`: **Smart Open**.
@@ -202,4 +220,4 @@ notes.setup()
 - `<leader>a`: Toggle Open (`.`) <-> Active (`=`).
 - `<leader>,`: Toggle Open (`.`) <-> Parked (`,`).
 - `<leader>q`: Toggle Open (`.`) <-> Question (`?`).
-- `<leader>-`: **Archive Note**. Moves current note to `archive/[type]/`.
+- `<leader>A`: **Archive Note**. Moves current note to `archive/[type]/`.

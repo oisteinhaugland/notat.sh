@@ -11,6 +11,9 @@ else
     NOTES_SYSTEM_DIR="$( cd "$( dirname "$0" )" && pwd )"
 fi
 
+# Add bin to path
+export PATH="$NOTES_SYSTEM_DIR/bin:$PATH"
+
 # Source Configuration
 source "$NOTES_SYSTEM_DIR/config.zsh"
 
