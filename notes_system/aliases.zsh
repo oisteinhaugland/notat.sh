@@ -25,7 +25,7 @@ alias sr='note_resource_search'
 
 # Search Actions (Inline - Default)
 alias sa='note_search "$NOTES_BASE_DIR" "^[.=>?,]"'
-alias saa='note_search "$NOTES_BASE_DIR" "^[.=>?,]"' # Same as sa
+alias saa='note_search "$NOTES_BASE_DIR" "^\s*[.=>?,]"' # Same as sa but allows indentation
 alias sab='note_search "$NOTES_BASE_DIR" "^,"'       # Backlog
 alias saq='note_search "$NOTES_BASE_DIR" "^\?"'      # Questions
 

@@ -121,17 +121,17 @@ end
 -- Toggle action state
 function M.toggle_state(target)
     local line = vim.api.nvim_get_current_line()
-    -- Fix: Allow whitespace before symbol
-    local sym = line:match("^%s*([.,=x>?])")
+    -- Capture prefix (indentation), symbol, and suffix (rest of line)
+    local prefix, sym, suffix = line:match("^(%s*)([.,=x>?])(.*)")
 
     if not sym then
         vim.notify("Not an action line.", vim.log.levels.INFO)
         return
     end
 
-    local new = (sym == target) and "." or target
-    -- Replace the first occurrence of the symbol
-    local updated = line:gsub(sym, new, 1)
+    local new_sym = (sym == target) and "." or target
+    -- Reconstruct the line safely
+    local updated = prefix .. new_sym .. suffix
     vim.api.nvim_set_current_line(updated)
 end
 
