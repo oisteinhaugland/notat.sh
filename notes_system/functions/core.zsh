@@ -160,8 +160,8 @@ note_search() {
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit" \
-            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | cut -d: -f1); line=\$(echo \$file_line | cut -d: -f2); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
-            --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' ) )
+            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | sed 's/:.*//'); line=\$(echo \$file_line | sed 's/.*://'); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
+            --preview-window 'up,60%,border-bottom' ) )
     
     if [[ -n "$selected" ]]; then
         # Extract File:Line from the second field (hidden)
@@ -225,8 +225,8 @@ EOF
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit | ESC: Exit" \
-            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | cut -d: -f1); line=\$(echo \$file_line | cut -d: -f2); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
-            --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | sed 's/:.*//'); line=\$(echo \$file_line | sed 's/.*://'); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
+            --preview-window 'up,60%,border-bottom' \
             --bind "enter:execute($opener_script {2})" )
             
     # Cleanup
