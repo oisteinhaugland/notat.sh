@@ -1,4 +1,4 @@
-# Intended for zsh
+# Intended for zsh and bash
 # Core functions for Notetaking System
 
 # --- Helpers ---
@@ -254,3 +254,40 @@ note_review_file() {
 # Legacy/Alias Helpers
 note_review() { note_review_inline "$@"; } # Default review was inline, but modules will override
 note_search_pattern() { note_search "$2" "$1"; } # pattern, dir -> dir, pattern
+
+# --- Archive Functions ---
+
+note_archive_search() {
+    local type="$1"  # d, t, a, j, or empty for all
+    local pattern="${2:-.}"
+    local archive_dir="$NOTES_ARCHIVE_DIR"
+    
+    if [[ -n "$type" ]]; then
+        case "$type" in
+            d) archive_dir="$NOTES_ARCHIVE_DIR/daily" ;;
+            t) archive_dir="$NOTES_ARCHIVE_DIR/thoughts" ;;
+            a) archive_dir="$NOTES_ARCHIVE_DIR/actions" ;;
+            j) archive_dir="$NOTES_ARCHIVE_DIR/journals" ;;
+            *) echo "Unknown archive type: $type" && return 1 ;;
+        esac
+    fi
+    
+    note_search "$archive_dir" "$pattern"
+}
+
+note_archive_review() {
+    local type="$1"  # d, t, a, j, or empty for all
+    local archive_dir="$NOTES_ARCHIVE_DIR"
+    
+    if [[ -n "$type" ]]; then
+        case "$type" in
+            d) archive_dir="$NOTES_ARCHIVE_DIR/daily" ;;
+            t) archive_dir="$NOTES_ARCHIVE_DIR/thoughts" ;;
+            a) archive_dir="$NOTES_ARCHIVE_DIR/actions" ;;
+            j) archive_dir="$NOTES_ARCHIVE_DIR/journals" ;;
+            *) echo "Unknown archive type: $type" && return 1 ;;
+        esac
+    fi
+    
+    note_review_file "$archive_dir"
+}

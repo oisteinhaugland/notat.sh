@@ -11,26 +11,34 @@ alias st='note_thought_search'
 # We exclude lines starting with whitespace (handled by saa)
 # We need to be careful with > because it's also used for blockquotes/source links.
 # Assuming actions are like "> Waiting", we match that.
-alias sa='note_search_pattern "^[.=>?]"'
+alias sa='note_search_pattern "^[.=>?]" "$NOTES_BASE_DIR"'
 
 # saa: Search ALL active actions (including indented)
-alias saa='note_search_pattern "^(\s*)[.=>?]"'
+alias saa='note_search_pattern "^(\s*)[.=>?]" "$NOTES_BASE_DIR"'
 
 # sab: Search backlog/parked actions (,)
-alias sab='note_search_pattern "^,"'
+alias sab='note_search_pattern "^," "$NOTES_BASE_DIR"'
+
+# saab: Search all backlog/parked actions (including indented)
+alias saab='note_search_pattern "^\s*," "$NOTES_BASE_DIR"'
 
 alias sj='note_journal_search'
 alias sp='note_people_search'
 alias sr='note_resource_search'
 
-# Search Actions (Inline - Default)
-alias sa='note_search "$NOTES_BASE_DIR" "^[.=>?,]"'
-alias saa='note_search "$NOTES_BASE_DIR" "^\s*[.=>?,]"' # Same as sa but allows indentation
-alias sab='note_search "$NOTES_BASE_DIR" "^,"'       # Backlog
-alias saq='note_search "$NOTES_BASE_DIR" "^\?"'      # Questions
+
 
 # Search Action Notes (Files)
 alias san='note_action_note_search'
+
+# Archive Search (All types)
+alias sA='note_search "$NOTES_ARCHIVE_DIR"'
+
+# Archive Search by Type
+alias stA='note_search "$NOTES_ARCHIVE_DIR/thoughts"'
+alias saA='note_search "$NOTES_ARCHIVE_DIR/actions"'
+alias sdA='note_search "$NOTES_ARCHIVE_DIR/daily"'
+alias sjA='note_search "$NOTES_ARCHIVE_DIR/journals"'
 
 # Journal Aliases
 # The individual search aliases are now part of the general search block above.
@@ -57,7 +65,7 @@ alias pt='note_thought_pick'
 alias pj='note_journal_pick'
 alias pp='note_people_pick'
 alias pr='note_resource_pick'
-alias pa='note_action_pick' # Action Notes
+alias pan='note_action_pick' # Pick Action Note (file)
 
 # Review (Looped)
 alias rd='note_daily_review'
@@ -68,9 +76,23 @@ alias rr='note_resource_review'
 
 # Review Actions (Inline - Default)
 alias ra='note_action_review'
+alias raa='note_action_review_all'
+
+# Review Action Backlog (Inline)
+alias rab='note_action_backlog_review'
+alias raab='note_action_backlog_review_all'
 
 # Review Action Notes (Files)
 alias ran='note_action_note_review'
+
+# Archive Review (All types)
+alias rA='note_review_file "$NOTES_ARCHIVE_DIR"'
+
+# Archive Review by Type
+alias rtA='note_review_file "$NOTES_ARCHIVE_DIR/thoughts"'
+alias raA='note_review_file "$NOTES_ARCHIVE_DIR/actions"'
+alias rdA='note_review_file "$NOTES_ARCHIVE_DIR/daily"'
+alias rjA='note_review_file "$NOTES_ARCHIVE_DIR/journals"'
 
 # New
 alias nd='note_daily_create'

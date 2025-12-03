@@ -78,6 +78,21 @@ note_action_review() {
     note_review_inline "$NOTES_BASE_DIR" "^[.=>?,]" 
 }
 
+note_action_review_all() { 
+    # Review all inline actions including indented (Looped)
+    note_review_inline "$NOTES_BASE_DIR" "^\s*[.=>?,]" 
+}
+
+note_action_backlog_review() { 
+    # Review top-level backlog actions (Looped)
+    note_review_inline "$NOTES_BASE_DIR" "^," 
+}
+
+note_action_backlog_review_all() { 
+    # Review all backlog actions including indented (Looped)
+    note_review_inline "$NOTES_BASE_DIR" "^\s*," 
+}
+
 # Action Notes (The files in actions/)
 note_action_pick() { 
     note_pick "$NOTES_ACTIONS_DIR" 
