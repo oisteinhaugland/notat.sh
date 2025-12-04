@@ -30,10 +30,12 @@ fi
 # 3. Render
 if command -v bat &> /dev/null; then
     # BAT is available
+    # Use configured theme or fallback
+    THEME="${NOTES_BAT_THEME:-Visual Studio Dark+}"
     if [[ -n "$LINE" ]]; then
-        bat --style=numbers --color=always --highlight-line "$LINE" "$FILE"
+        bat --style=numbers --color=always --theme="$THEME" --highlight-line "$LINE" "$FILE"
     else
-        bat --style=numbers --color=always "$FILE"
+        bat --style=numbers --color=always --theme="$THEME" "$FILE"
     fi
 else
     # Fallback to cat/head/tail

@@ -34,3 +34,7 @@ export EDITOR="${EDITOR:-vim}"
 # FZF Configuration
 # Common options for all FZF interactions
 export NOTES_FZF_OPTS="--ansi --delimiter : --layout=reverse --border --height=80%"
+
+# Bat Theme for Previews
+# A high-contrast theme is recommended for better line highlighting
+export NOTES_BAT_THEME="${NOTES_BAT_THEME:-Visual Studio Dark+}"
