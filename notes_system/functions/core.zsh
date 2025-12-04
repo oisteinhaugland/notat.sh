@@ -184,14 +184,14 @@ note_search() {
 
     selected=$( (cd "$dir" && \
         rg --line-number --no-heading --color=never --smart-case "$pattern" . | \
-        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2/' | \
+        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2\t\2/' | \
         fzf ${NOTES_FZF_OPTS:-} \
             --delimiter '\t' \
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit" \
             --preview "$preview_cmd {2}" \
-            --preview-window 'up,60%,border-bottom' ) )
+            --preview-window 'up,60%,border-bottom,+{3}/2' ) )
     
     if [[ -n "$selected" ]]; then
         # Extract File:Line from the second field (hidden)
@@ -258,14 +258,14 @@ EOF
     # rg: --color=never for plain text
     (cd "$dir" && \
         rg --line-number --no-heading --color=never --smart-case "$pattern" . | \
-        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2/' | \
+        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2\t\2/' | \
         fzf ${NOTES_FZF_OPTS:-} \
             --delimiter '\t' \
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit | ESC: Exit" \
             --preview "$preview_cmd {2}" \
-            --preview-window 'up,60%,border-bottom' \
+            --preview-window 'up,60%,border-bottom,+{3}/2' \
             --bind "enter:execute($opener_script {2})" )
             
     # Cleanup
