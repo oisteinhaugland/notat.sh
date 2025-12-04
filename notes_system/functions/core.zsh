@@ -81,7 +81,35 @@ note_create_or_open() {
     note_open_editor "$filepath"
 }
 
-# --- Generic Helpers ---
+# --- Helpers ---
+
+note_get_preview_cmd() {
+    # Returns the absolute path to the preview script
+    local preview_script=""
+    
+    # Try to derive from NOTES_BASE_DIR if set
+    if [[ -n "$NOTES_BASE_DIR" ]]; then
+        # Assuming standard structure: parent of NOTES_BASE_DIR contains notes_system
+        # This is a bit fragile if NOTES_BASE_DIR is customized.
+        local potential_path="${NOTES_BASE_DIR}/../notes_system/bin/preview.sh"
+        if [[ -f "$potential_path" ]]; then
+            # Resolve to absolute path
+            if command -v readlink &> /dev/null; then
+                preview_script=$(readlink -f "$potential_path")
+            else
+                # Fallback for systems without readlink -f (e.g. macOS default)
+                # But user is on Linux.
+                preview_script=$(realpath "$potential_path")
+            fi
+            echo "$preview_script"
+            return 0
+        fi
+    fi
+    
+    # Fallback: assume it's in the PATH
+    echo "preview.sh"
+}
+
 
 note_sanitize() {
     local input="$1"
@@ -152,22 +180,25 @@ note_search() {
     # rg: --color=never ensures plain text output (White/Default terminal color)
     # sed: moves "File:Line" to the end, separated by tab
     # fzf: displays only the second field (Content)
+    local preview_cmd=$(note_get_preview_cmd)
+
     selected=$( (cd "$dir" && \
         rg --line-number --no-heading --color=never --smart-case "$pattern" . | \
-        sed -E 's/^([^:]+:[0-9]+):(.*)$/\2\t\1/' | \
+        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2/' | \
         fzf ${NOTES_FZF_OPTS:-} \
             --delimiter '\t' \
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit" \
-            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | sed 's/:.*//'); line=\$(echo \$file_line | sed 's/.*://'); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
+            --preview "$preview_cmd {2}" \
             --preview-window 'up,60%,border-bottom' ) )
     
     if [[ -n "$selected" ]]; then
         # Extract File:Line from the second field (hidden)
+        # Extract File:Line from the second field (hidden)
         local file_line=$(echo "$selected" | awk -F'\t' '{print $2}')
-        local file=$(echo "$file_line" | cut -d: -f1)
-        local line=$(echo "$file_line" | cut -d: -f2)
+        local file="${file_line%:*}"
+        local line="${file_line##*:}"
         # Construct absolute path since we are outside the subshell now
         note_open_editor "$dir/$file" "$line"
     fi
@@ -183,8 +214,11 @@ note_pick() {
     local selected
     # fd -> fzf -> open -> exit
     # Run in subshell for relative paths
+    local preview_cmd=$(note_get_preview_cmd)
+    # fd -> fzf -> open -> exit
+    # Run in subshell for relative paths
     selected=$( (cd "$dir" && fd . . --type f --color=always | \
-        fzf ${NOTES_FZF_OPTS:-} --preview "bat --style=numbers --color=always {}" --preview-window 'right,50%,border-left') )
+        fzf ${NOTES_FZF_OPTS:-} --preview "$preview_cmd {}" --preview-window 'right,50%,border-left') )
 
     if [[ -n "$selected" ]]; then
         note_open_editor "$dir/$selected"
@@ -207,9 +241,10 @@ note_review_inline() {
     cat <<EOF > "$opener_script"
 #!/bin/sh
 # Input: "File:Line" (from fzf {2})
+# Input: "File:Line" (from fzf {2})
 file_line="\$1"
-file=\$(echo "\$file_line" | cut -d: -f1)
-line=\$(echo "\$file_line" | cut -d: -f2)
+file="\${file_line%:*}"
+line="\${file_line##*:}"
 # Open editor
 $editor_cmd "+\$line" "\$file"
 EOF
@@ -217,15 +252,19 @@ EOF
 
     # Run in subshell
     # rg: --color=never for plain text
+    local preview_cmd=$(note_get_preview_cmd)
+
+    # Run in subshell
+    # rg: --color=never for plain text
     (cd "$dir" && \
         rg --line-number --no-heading --color=never --smart-case "$pattern" . | \
-        sed -E 's/^([^:]+:[0-9]+):(.*)$/\2\t\1/' | \
+        sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2/' | \
         fzf ${NOTES_FZF_OPTS:-} \
             --delimiter '\t' \
             --with-nth 1 \
             --prompt "Search> " \
             --header "ENTER: Edit | ESC: Exit" \
-            --preview "file_line=\$(echo {2}); file=\$(echo \$file_line | sed 's/:.*//'); line=\$(echo \$file_line | sed 's/.*://'); bat --style=numbers --color=always --highlight-line \$line \"\$file\"" \
+            --preview "$preview_cmd {2}" \
             --preview-window 'up,60%,border-bottom' \
             --bind "enter:execute($opener_script {2})" )
             
@@ -243,9 +282,12 @@ note_review_file() {
     local editor_cmd="${EDITOR:-vim}"
 
     # fd -> fzf (bind enter to execute editor) -> loop
+    local preview_cmd=$(note_get_preview_cmd)
+
+    # fd -> fzf (bind enter to execute editor) -> loop
     (cd "$dir" && fd . . --type f --color=always | \
         fzf ${NOTES_FZF_OPTS:-} \
-            --preview "bat --style=numbers --color=always {}" \
+            --preview "$preview_cmd {}" \
             --preview-window 'right,50%,border-left' \
             --header "Press ENTER to edit, ESC to exit (Loop)" \
             --bind "enter:execute($editor_cmd {1})")
