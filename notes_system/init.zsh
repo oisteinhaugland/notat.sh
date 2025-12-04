@@ -3,12 +3,12 @@
 
 # Detect script directory (Cross-shell compatible)
 if [ -n "$BASH_VERSION" ]; then
-    NOTES_SYSTEM_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    export NOTES_SYSTEM_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 elif [ -n "$ZSH_VERSION" ]; then
-    NOTES_SYSTEM_DIR="${0:a:h}"
+    export NOTES_SYSTEM_DIR="${0:a:h}"
 else
     # Fallback for other shells (may not work if sourced)
-    NOTES_SYSTEM_DIR="$( cd "$( dirname "$0" )" && pwd )"
+    export NOTES_SYSTEM_DIR="$( cd "$( dirname "$0" )" && pwd )"
 fi
 
 # Add bin to path

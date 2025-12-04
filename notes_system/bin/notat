@@ -4,7 +4,7 @@
 # Resolve symlink to find the real location of the script
 REAL_SCRIPT_PATH="$(readlink -f "$0")"
 SCRIPT_DIR="$(dirname "$REAL_SCRIPT_PATH")"
-SYSTEM_DIR="$(dirname "$SCRIPT_DIR")"
+export NOTES_SYSTEM_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Source the system
 # We need to source config and functions. 
@@ -17,8 +17,8 @@ SYSTEM_DIR="$(dirname "$SCRIPT_DIR")"
 # They use `command -v` which is supported in bash.
 # So bash should be fine.
 
-source "$SYSTEM_DIR/config.zsh"
-for func in "$SYSTEM_DIR/functions/"*.zsh; do
+source "$NOTES_SYSTEM_DIR/config.zsh"
+for func in "$NOTES_SYSTEM_DIR/functions/"*.zsh; do
     source "$func"
 done
 
@@ -30,6 +30,7 @@ usage() {
     echo "  search <type>       Search notes of a specific type"
     echo "  pick <type>         Pick (find) a note file"
     echo "  review <type>       Review notes interactively"
+    echo "  theme               Select preview theme"
     echo "  health              Run system health check"
     echo "  help                Show this help"
     echo ""
@@ -94,6 +95,9 @@ case "$cmd" in
                 exit 1
             fi
         fi
+        ;;
+    theme)
+        note_theme
         ;;
     health)
         notat_health
