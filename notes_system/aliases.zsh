@@ -102,3 +102,4 @@ alias nt='note_thought_create'
 # Open
 alias od='note_daily_open_today'
 alias oa='note_action_open_active'
+alias ob='note_dashboard_open'
