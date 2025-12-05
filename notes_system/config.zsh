@@ -38,3 +38,7 @@ export NOTES_FZF_OPTS="--ansi --delimiter : --layout=reverse --border --height=8
 # Bat Theme for Previews
 # A high-contrast theme is recommended for better line highlighting
 export NOTES_BAT_THEME="${NOTES_BAT_THEME:-Visual Studio Dark+}"
+
+# FZF Preview Window Configuration
+# Default to vertical split (right side)
+export NOTES_FZF_PREVIEW_WINDOW="${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}"

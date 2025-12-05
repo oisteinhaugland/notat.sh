@@ -191,7 +191,7 @@ note_search() {
             --prompt "Search> " \
             --header "ENTER: Edit" \
             --preview "$preview_cmd {2}" \
-            --preview-window 'up,60%,border-bottom,+{3}/2' ) )
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" ) )
     
     if [[ -n "$selected" ]]; then
         # Extract File:Line from the second field (hidden)
@@ -218,7 +218,7 @@ note_pick() {
     # fd -> fzf -> open -> exit
     # Run in subshell for relative paths
     selected=$( (cd "$dir" && fd . . --type f --color=always | \
-        fzf ${NOTES_FZF_OPTS:-} --preview "$preview_cmd {}" --preview-window 'right,50%,border-left') )
+        fzf ${NOTES_FZF_OPTS:-} --preview "$preview_cmd {}" --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}") )
 
     if [[ -n "$selected" ]]; then
         note_open_editor "$dir/$selected"
@@ -265,7 +265,7 @@ EOF
             --prompt "Search> " \
             --header "ENTER: Edit | ESC: Exit" \
             --preview "$preview_cmd {2}" \
-            --preview-window 'up,60%,border-bottom,+{3}/2' \
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
             --bind "enter:execute($opener_script {2})" )
             
     # Cleanup
@@ -288,7 +288,7 @@ note_review_file() {
     (cd "$dir" && fd . . --type f --color=always | \
         fzf ${NOTES_FZF_OPTS:-} \
             --preview "$preview_cmd {}" \
-            --preview-window 'right,50%,border-left' \
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
             --header "Press ENTER to edit, ESC to exit (Loop)" \
             --bind "enter:execute($editor_cmd {1})")
 }

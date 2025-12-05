@@ -58,7 +58,7 @@ EOF
             --prompt "Dashboard> " \
             --header "ENTER: Edit | ESC: Exit" \
             --preview "$preview_cmd {2}" \
-            --preview-window 'right,50%,border-left' \
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
             --bind "enter:execute($opener_script {2})"
 
     rm -f "$opener_script"

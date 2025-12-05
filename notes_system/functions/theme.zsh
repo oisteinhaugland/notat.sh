@@ -27,7 +27,7 @@ note_theme() {
     local selected_theme
     selected_theme=$(bat --list-themes | fzf \
         --preview "$preview_cmd" \
-        --preview-window 'right,60%,border-left' \
+        --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
         --header "Current: $current_theme" \
         --layout=reverse --border --height=80%)
         
