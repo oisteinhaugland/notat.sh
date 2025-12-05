@@ -102,7 +102,7 @@ fi
 ############################################################
 check_deps() {
     say "Checking dependencies..."
-    local deps=(rg fzf bat fd)
+    local deps=(rg fzf bat fd git)
     local missing=()
 
     for dep in "${deps[@]}"; do
