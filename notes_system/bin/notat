@@ -31,7 +31,10 @@ usage() {
     echo "  pick <type>         Pick (find) a note file"
     echo "  review <type>       Review notes interactively"
     echo "  theme               Select preview theme"
-    echo "  health              Run system health check"
+    echo "  backup              Backup notes (git sync)"
+    echo "  stats               Show system statistics"
+    echo "  prune               Prune empty files"
+    echo "  doctor              Run system health check"
     echo "  help                Show this help"
     echo ""
     echo "Types:"
@@ -99,8 +102,17 @@ case "$cmd" in
     theme)
         note_theme
         ;;
-    health)
-        notat_health
+    backup)
+        note_backup "${2:-}"
+        ;;
+    stats)
+        note_stats
+        ;;
+    prune)
+        note_prune
+        ;;
+    doctor|health)
+        note_health
         ;;
     help|--help|-h)
         usage

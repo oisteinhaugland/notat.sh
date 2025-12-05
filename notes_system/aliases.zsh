@@ -103,3 +103,7 @@ alias nt='note_thought_create'
 alias od='note_daily_open_today'
 alias oa='note_action_open_active'
 alias ob='note_dashboard_open'
+
+# Maintenance
+# notat command is handled by bin/notat in PATH
+
