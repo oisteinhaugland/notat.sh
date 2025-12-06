@@ -254,6 +254,17 @@ EOF
     # rg: --color=never for plain text
     local preview_cmd=$(note_get_preview_cmd)
 
+    # Define reload command for fzf to refresh content after edit
+    # We create a temporary script to handle the pipeline and quoting safely
+    local reloader_script="/tmp/notat_reloader_$$.sh"
+    cat <<EOF > "$reloader_script"
+#!/bin/sh
+cd "$dir" && \
+rg --line-number --no-heading --color=never --smart-case "$pattern" . | \
+sed -E 's/^(.+):([0-9]+):(.*)$/\3\t\1:\2\t\2/'
+EOF
+    chmod +x "$reloader_script"
+
     # Run in subshell
     # rg: --color=never for plain text
     (cd "$dir" && \
@@ -266,10 +277,10 @@ EOF
             --header "ENTER: Edit | ESC: Exit" \
             --preview "$preview_cmd {2}" \
             --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
-            --bind "enter:execute($opener_script {2})" )
+            --bind "enter:execute($opener_script {2})+reload($reloader_script)" )
             
     # Cleanup
-    rm -f "$opener_script"
+    rm -f "$opener_script" "$reloader_script"
 }
 
 # 4. Review File (Looped File)
@@ -284,13 +295,24 @@ note_review_file() {
     # fd -> fzf (bind enter to execute editor) -> loop
     local preview_cmd=$(note_get_preview_cmd)
 
+    # Define reload command
+    # Use script to be safe with subshells/env
+    local reloader_script="/tmp/notat_reloader_file_$$.sh"
+    cat <<EOF > "$reloader_script"
+#!/bin/sh
+cd "$dir" && fd . . --type f --color=always
+EOF
+    chmod +x "$reloader_script"
+
     # fd -> fzf (bind enter to execute editor) -> loop
     (cd "$dir" && fd . . --type f --color=always | \
         fzf ${NOTES_FZF_OPTS:-} \
             --preview "$preview_cmd {}" \
             --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
             --header "Press ENTER to edit, ESC to exit (Loop)" \
-            --bind "enter:execute($editor_cmd {1})")
+            --bind "enter:execute($editor_cmd {1})+reload($reloader_script)")
+            
+    rm -f "$reloader_script"
 }
 
 # Legacy/Alias Helpers
