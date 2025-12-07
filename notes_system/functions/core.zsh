@@ -191,7 +191,7 @@ note_search() {
             --prompt "Search> " \
             --header "ENTER: Edit" \
             --preview "$preview_cmd {2}" \
-            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" ) )
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left},+{3}/2" ) )
     
     if [[ -n "$selected" ]]; then
         # Extract File:Line from the second field (hidden)
@@ -276,7 +276,7 @@ EOF
             --prompt "Search> " \
             --header "ENTER: Edit | ESC: Exit" \
             --preview "$preview_cmd {2}" \
-            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}" \
+            --preview-window "${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left},+{3}/2" \
             --bind "enter:execute($opener_script {2})+reload($reloader_script)" )
             
     # Cleanup
