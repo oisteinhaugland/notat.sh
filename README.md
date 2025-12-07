@@ -18,11 +18,15 @@ A terminal-based note-taking system optimized for speed and flow.
 
 ## Why Notat.sh
 
-Capture friction  - Naming and filing decisions kill momentum
+Capture friction - Naming and filing decisions kill momentum
+
 Retrieval failure - Can't find what you wrote
+
 Context switching - Leaving your workflow to take notes
+
 No thinking space - Nowhere to work through problems
-Task overwhelm    - The management overhead exceeded the actual work
+
+Task overwhelm - The management overhead exceeded the actual work
 
 ## Features
 
@@ -292,9 +296,9 @@ NOTES_FZF_OPTS="--height=80% --border=rounded"  # FZF options
 
 ## Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute introduction for beginners
-- **[docs/system-description.md](docs/system-description.md)** - Design philosophy and technical details
-- **[tests/README.md](tests/README.md)** - Test suite documentation
+- **[Quick Start Guide](QUICKSTART.md)** - 5-minute introduction for beginners
+- **[System Description](docs/system-description.md)** - Design philosophy and technical details
+- **[Test Suite Documentation](tests/README.md)** - Test suite documentation
 
 ## Health Check
 
