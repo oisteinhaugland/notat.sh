@@ -124,17 +124,115 @@ The system is built on the premise that latency kills thought.
 
 The `notat` command provides a unified entry point for all system functions.
 
+> **For complete usage**: See [README.md](../README.md#command-reference)
+
 ```bash
-notat new [type] [name]   # Create notes
-notat search [type]       # Search content
-notat pick [type]         # Find files
-notat review [type]       # Interactive review loop
-notat theme               # Change preview theme
-notat health              # System health check
+notat new [type] [name]       # Create notes
+notat search [type]           # Search content
+notat pick [type]             # Find files
+notat review [type]           # Interactive review loop
+
+notat env list                # List environments
+notat env switch <name>       # Switch environment
+
+notat secure init [env]       # Initialize encrypted vault
+notat secure mount [env]      # Mount vault
+notat secure publish [env]    # Sync to git
+
+notat theme                   # Change preview theme
+notat stats [env]             # Show statistics
+notat doctor                  # Health check
 ```
+
+## Security Architecture
+
+### Multi-Environment Support
+
+The system supports multiple isolated environments (e.g., `personal`, `work`):
+
+```
+~/notes/
+├── personal/     # Personal environment
+└── work/         # Work environment
+
+~/.notes-encrypted/
+├── personal/     # Encrypted vault for personal
+└── work/         # Encrypted vault for work
+```
+
+Each environment has its own:
+- Notes directory (`~/notes/<env>`)
+- Encrypted vault (`~/.notes-encrypted/<env>`)
+- Git remote (optional)
+- Auto-mount keyfile (optional)
+
+**Switch between environments:**
+```bash
+notat env switch work
+notat env switch personal
+```
+
+### Encryption Layer (gocryptfs)
+
+When encryption is enabled, the system uses `gocryptfs` for transparent file-level encryption:
+
+**Architecture:**
+```
+Plain Text (mounted)          Encrypted (at rest)
+~/notes/personal/        →    ~/.notes-encrypted/personal/
+  ├── daily/                    ├── gocryptfs.conf (vault config)
+  ├── thoughts/                 ├── gocryptfs.diriv (encryption)
+  └── actions/                  └── [encrypted files]
+```
+
+**How it works:**
+1. **At rest**: Files in `~/.notes-encrypted/` are encrypted
+2. **When mounted**: `gocryptfs` decrypts on-the-fly to `~/notes/`
+3. **During save**: Changes are encrypted immediately back to vault
+4. **Git sync**: Only encrypted files are pushed to remote
+
+**Security properties:**
+- Files are encrypted with your master password
+- Filenames are obscured (diriv encryption)
+- Each environment has independent encryption
+- Auto-mount uses keyfile (user-permission protected)
+
+### Idempotent Setup Wizard
+
+The setup wizard (`notat setup`) detects existing configuration:
+
+```bash
+notat setup personal
+
+Current Status for 'personal':
+  Vault:      ✓ Configured
+  Git Remote: ✗ Not configured  
+  Auto-Mount: ✓ Configured
+  Mounted:    ✓ Yes
+
+1) Configure missing components only
+2) Reconfigure everything (--force)
+3) Exit
+```
+
+**Features:**
+- Detects vault, git, keyfile, mount status
+- Only prompts for missing components
+- `--force` flag for reconfiguration
+- Safe to run multiple times
+
+> **For setup details**: See [Idempotent Wizard Walkthrough](../walkthrough.md) (if available)
 
 ## Dependencies
 - **ripgrep (`rg`)**: Fast text search.
 - **fd-find (`fd`)**: Fast file finding.
 - **fzf**: Fuzzy finder interface.
 - **bat**: Syntax highlighting and preview rendering.
+- **gocryptfs** *(optional)*: Encryption for secure vaults.
+- **git** *(optional)*: Version control and sync.
+
+## Further Reading
+
+- **[README.md](../README.md)** - Installation, commands, and usage
+- **[QUICKSTART.md](../QUICKSTART.md)** - 5-minute beginner guide
+- **[tests/README.md](../tests/README.md)** - Test suite documentation

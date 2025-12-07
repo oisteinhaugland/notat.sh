@@ -1,223 +1,335 @@
 # Notat.sh
 
-A simple, terminal-based, note-taking system.
+A terminal-based note-taking system optimized for speed and flow.
+
+> **New here?** Start with the [Quick Start Guide](QUICKSTART.md) for a 5-minute introduction.
+
+> **Note**: This project is a work in progress. Features and documentation may change.
 
 ## Table of Contents
-- [Motivation](#motivation)
-    - [Problems](#problems)
-    - [Solutions](#solutions)
+- [Why Notat.sh](#why-notatsh)
 - [Features](#features)
-    - [Terminal Workflow](#terminal-workflow)
-    - [Powerful search](#powerful-search)
-    - [Task System](#task-system)
-    - [Automatic organization](#automatic-organization)
-    - [Simple Grammar](#simple-grammar)
-
 - [Installation](#installation)
-    - [Getting Started](#getting-started)
-- [Configuration](#configuration)
-- [Usage Cheat Sheet](#usage-cheat-sheet)
-- [Neovim Integration](#neovim-integration-1)
+- [Quick Start](#quick-start)
+- [Security & Environments](#security--environments)
+- [Command Reference](#command-reference)
+- [Neovim Integration](#neovim-integration)
+- [Documentation](#documentation)
 
-## Motivation
+## Why Notat.sh
 
-### Problems
-
-Thoughts, ideas, anything noteworthy...
-
-    - Where do you put it?
-    - What should you name it?
-    - How will you find it again?
-   
-Tasks...
-
-    - what was i working on again?
-    - where can i think this through?
-    - where is all the information i need?
-    - do i have any unanswered questions?
-
-This friction gets in the way of writing, thinking and doing.
-
-
-### Solutions
-
-- **Capture First**: Just get it down. Use `nt` (New Thought) or `nd` (New Daily) to capture instantly.
-- **Trust Search**: Don't worry about where it goes. With powerful search tools built-in, you can always find it later.
-- **Stay in Flow**: Keep your hands on the keyboard and your mind on your work. 
+Capture friction  - Naming and filing decisions kill momentum
+Retrieval failure - Can't find what you wrote
+Context switching - Leaving your workflow to take notes
+No thinking space - Nowhere to work through problems
+Task overwhelm    - The management overhead exceeded the actual work
 
 ## Features
 
-### Terminal Workflow
+### Terminal-First Workflow
+Designed for keyboard-driven speed. **All commands are 2-3 characters.**
 
-**Notat.sh** is designed to be used entirely from your terminal using short aliases.
+### Instant Search
+Find anything in milliseconds:
+- **Full-text search** with `ripgrep` (search within note types)
+- **File picker** with `fd` + `fzf` for finding by filename
+- **Live previews** with syntax highlighting
 
-### Powerful search
-Find everything, quickly. 
+### Distributed Task Management
+Track tasks across *all* your notes with simple markers:
 
-The system uses `ripgrep` (rg) for lightning-fast text search across all your notes, and `fd-find` (fd) with  `fzf` for fuzzy finding files by name.
+| Marker | Meaning | Example |
+|--------|---------|---------|
+| `. ` | Open | `. Call dentist` |
+| `= ` | Active (doing now) | `= Write proposal` |
+| `x ` | Done | `x Finished taxes` |
+| `, ` | Parked (later) | `, Learn Rust` |
+| `> ` | Waiting/Blocked | `> Waiting for feedback` |
+| `? ` | Question | `? How does async work?` |
 
-Whether you remember a keyword or just a filename, you can find it in milliseconds.
+Toggle states with Neovim keybindings or just edit the marker manually.
 
-### Task System
+### Zero Organization Required
+Notes auto-organize by type:
+- **Daily**: Your daily inbox (`nd`)
+- **Thoughts**: Quick timestamped ideas (`nt`)
+- **Actions**: Dedicated task notes (`na`)
+- **Resources**: Knowledge base (`nr`)
+- **Journals**: Long-running topic logs (`nj`)
+- **People**: Contact & interaction logs (`np`)
 
-Turn any line into a task by starting it with a symbol. The system tracks these across all your notes.
+### Built-in Encryption
+Secure your notes with `gocryptfs`:
+- End-to-end encrypted vaults
+- Multiple environments (work/personal)
+- Git sync for encrypted backups
+- Auto-mount with keyfiles
 
-- `. ` : **Open** (Something to do)
-- `= ` : **Active** (Working on it right now)
-- `, ` : **Parked** (Backlog/Later)
-- `x ` : **Closed** (Done)
-- `> ` : **Waiting** (Blocked/Waiting for someone)
-- `? ` : **Question** (Something to investigate)
-
-### Automatic organization
-
-Notes are organized for you.
-
-The system provides six opinionated types to keep your notes separated by intent:
-
-- **Daily**: Your daily inbox. Write whatever is on your mind for the day.
-- **Thoughts**: Quick ideas, sparks, or literally anything that crosses your mind.
-- **Actions**:  For action that demand their own note.
-
-- **Resources**: Static knowledge and reference material. This is where your knowledge ends up.
-- **Journals**: Long-running logs for specific topics (e.g., Diary, Work, Training).
-- **People**: Contact details and interaction logs (think crm-lite).
-
-All notes can be archived.
-
-### Simple Grammar
-
-Commands in **Notat.sh** follows a `[VERB][SUBJECT]` structure.
-
-#### Verbs
-- s, search (text)
-- f, find (file)
-- r, review (looped search)
-- o, open (predetermined file)
-- n, new (create file)
-
-#### Subjects
-Common:
-- d, daily
-- t, thoughts
-- a, actions
-
-Support:
-- r, resources
-- A, archive
-- p, people
-- j, journals
-
-### Neovim Integration
-
-Toggle tasks status, archive notes, and create action notes, open links with keyboard shortcuts.
+### Customizable Themes
+Pick your preview theme: `notat theme`
 
 ## Installation
 
-1.  **Run the Installer**:
-    ```bash
-    ./install.sh
-    ```
-    This script will:
-    - Check for dependencies (`rg`, `fzf`, `bat`, `fd`).
-    - Symlink the system to `~/.notat.sh` (or copy if you prefer).
-    - Add the source line to your shell config.
+### Requirements
+- **Zsh** or **Bash**
+- Required: `ripgrep`, `fzf`, `bat`, `fd`, `git`
+- Optional: `gocryptfs` (for encryption), `neovim` (for integration)
 
-2.  **Manual Installation** (Alternative):
-    - Clone: `git clone https://github.com/yourusername/notat.sh.git ~/.notat.sh`
-    - Enable: Add `source ~/.notat.sh/init.zsh` to `~/.zshrc` or `~/.bashrc`.
-    - Deps: Install `ripgrep`, `fzf`, `bat`, and `fd`.
-
-### Getting Started
-1.  **Start your day**: `od` (Open Daily).
-2.  **Have an idea?**: `nt` (New Thought).
-3.  **Time to work**: `sa` (Review Actions).
-4.  **Need info?**: `sr` (Search Resources).
-
-## Configuration
-
-Edit `notes_system/config.zsh` to customize:
-
-- `NOTES_BASE_DIR`: Where your notes are stored (default: `~/notes`).
-- `NOTES_DAILY_DATE_FORMAT`: Format for daily note filenames.
-- `NOTES_FZF_OPTS`: Custom flags for FZF.
-- `EDITOR`: Your preferred editor (default: `vim`).
-
-## Usage Cheat Sheet
-
-### Creation
-- `nd`: **New Daily**. Opens today's daily note.
-- `nt`: **New Thought**. Creates a timestamped note.
-- `na`: **New Action**. Prompts for a title.
-- `nj`: **New Journal**. Prompts for a topic.
-- `np`: **New Person**. Prompts for a name.
-- `nr`: **New Resource**. Prompts for a title.
-
-### Search
-- `sd`: Search **Daily** notes.
-- `st`: Search **Thought** notes.
-- `sa`: Search **Active Actions** (top-level `.`, `=`, `>`).
-- `saa`: Search **All Actions** (including indented).
-- `sab`: Search **Action Backlog** (`,`).
-- `saf`: Search **Action Files**.
-- `sq`: Search **Questions** (`?`).
-- `sj`: Search **Journals**.
-- `sp`: Search **People**.
-- `sr`: Search **Resources**.
-
-### Find (File Finder)
-- `fd`: Find Daily note.
-- `ft`: Find Thought note.
-- `fa`: Find Action note.
-- `fj`: Find Journal.
-- `fp`: Find Person.
-- `fr`: Find Resource.
-
-### Review (Interactive Loop)
-- `rd`: Review Daily notes.
-- `rt`: Review Thought notes.
-- `ra`: Review Action notes.
-- `rj`: Review Journal.
-- `rp`: Review People.
-- `rr`: Review Resource.
-
-### Open
-- `od`: Open today's daily note (same as `nd`).
-- `oa`: **Open Active**. Opens the first active task (`=`).
-
-## Health Check
-
-Run `notat_health` to verify your installation, dependencies, and configuration.
+### Install
 
 ```bash
-notat_health
+git clone https://github.com/yourusername/notat.sh.git
+cd notat.sh
+./install.sh
 ```
+
+The installer will:
+1. Check dependencies
+2. Link the system to `~/.config/notat.sh`
+3. Add initialization to your shell config
+4. Optionally set up Neovim integration
+
+Restart your terminal when done.
+
+## Quick Start
+
+### 1. Initial Setup
+
+Run the setup wizard:
+```bash
+notat setup
+```
+
+This creates your first environment and optionally configures encryption and Git sync.
+
+> **Tip**: Run `notat setup --force` to reconfigure an existing environment.
+
+### 2. Your First Notes
+
+```bash
+nd          # Open today's daily note (your inbox)
+nt          # Create a timestamped thought
+```
+
+### 3. Find Your Work
+
+```bash
+sa          # Search all active tasks
+st docker   # Search thoughts for "docker"
+oa          # Open the first active (=) task
+```
+
+### 4. The Grammar
+
+Commands follow `[VERB][SUBJECT]`:
+
+**Common verbs:**
+- `n` = New
+- `s` = Search (within type)
+- `p` = Pick (file finder)
+- `o` = Open
+- `r` = Review (interactive loop)
+
+**Subjects:**
+- `d` = Daily
+- `t` = Thoughts
+- `a` = Actions
+- `r` = Resources
+- `j` = Journals
+- `p` = People
+
+**Examples:**
+- `nd` = New Daily
+- `st` = Search Thoughts
+- `ra` = Review Actions
+- `pp` = Pick Person file
+
+## Security & Environments
+
+### Environments
+
+Separate your work and personal notes:
+
+```bash
+notat env list              # Show all environments
+notat env switch work       # Switch to 'work'
+notat stats personal        # View stats for 'personal'
+```
+
+### Encryption
+
+Protect sensitive notes with `gocryptfs`:
+
+```bash
+notat secure init personal         # Create encrypted vault
+notat secure mount personal        # Mount vault
+notat secure publish personal      # Git push encrypted notes
+```
+
+#### Auto-Mount
+Generate a keyfile for passwordless mounting:
+
+```bash
+notat setup personal   # Wizard includes auto-mount setup
+```
+
+Then add to your `.zshrc`:
+```bash
+notat secure mount personal --auto
+```
+
+#### Git Sync
+Sync encrypted vaults to GitHub/GitLab:
+
+```bash
+notat secure git-setup personal git@github.com:user/vault.git
+notat secure publish personal     # Push changes
+```
+
+The vault is encrypted before it leaves your machine. Only you can decrypt it.
+
+## Command Reference
+
+### Core Commands
+
+```bash
+notat new <type> [name]      # Create note
+notat search <type> [query]  # Search content
+notat pick <type>            # Find file
+notat review <type>          # Interactive loop
+```
+
+### Environment & Security
+
+```bash
+notat env list               # List environments
+notat env switch <name>      # Switch environment
+
+notat secure init [env]      # Initialize encrypted vault
+notat secure mount [env]     # Mount vault
+notat secure unmount [env]   # Unmount vault
+notat secure publish [env]   # Git push vault
+notat secure git-setup <env> <url>  # Configure git remote
+```
+
+### System
+
+```bash
+notat theme                  # Select preview theme
+notat stats [env]            # Show statistics
+notat doctor                 # Health check
+notat backup [env]           # Quick publish (alias)
+notat --help                 # Show help
+```
+
+### Shell Aliases
+
+After installation, these aliases are available:
+
+**Create:**
+- `nd`, `nt`, `na`, `nr`, `nj`, `np`
+
+**Search:**
+- `sd`, `st`, `sa`, `sr`, `sj`, `sp`
+- `sa` - Active tasks only
+- `saa` - All actions (including indented)
+- `sq` - Questions
+
+**Pick (file finder):**
+- `pd`, `pt`, `pa`, `pr`, `pj`, `pp`
+
+**Review:**
+- `rd`, `rt`, `ra`, `rr`, `rj`, `rp`
+
+**Open:**
+- `od` - Open today's daily
+- `oa` - Open first active task
 
 ## Neovim Integration
 
-The installer can set this up for you automatically.
+The installer can set this up automatically, or you can do it manually.
 
-To set it up manually:
+### Manual Setup
 
-1.  Symlink `notes_system/nvim_integration.lua` to `~/.config/nvim/lua/notat.lua`.
-2.  Create `~/.config/nvim/lua/notat_config.lua` with:
-    ```lua
-    require('notat').setup({
-        notes_dir = os.getenv('NOTES_BASE_DIR'),
-        actions_dir = os.getenv('NOTES_ACTIONS_DIR'),
-    })
-    ```
-3.  Add `require('notat_config')` to your `init.lua`.
+1. Symlink the integration:
+```bash
+ln -s ~/.config/notat.sh/nvim_integration.lua ~/.config/nvim/lua/notat.lua
+```
 
-> [!IMPORTANT]
-> Do **NOT** source `init.lua` in your shell (bash/zsh). It is a Neovim configuration file.
+2. Create `~/.config/nvim/lua/notat_config.lua`:
+```lua
+require('notat').setup({
+    notes_dir = os.getenv('NOTES_BASE_DIR'),
+    actions_dir = os.getenv('NOTES_ACTIONS_DIR'),
+})
+```
+
+3. Add to your `init.lua`:
+```lua
+require('notat_config')
+```
 
 ### Keybindings
-- `<leader>o`: **Smart Open**.
-    - On an action line (`. Task`): Creates/Opens the action note.
-    - On a source link (`@ Source: file:line`): Opens the source file.
-- `<leader>x`: Toggle Open (`.`) <-> Closed (`x`).
-- `<leader>a`: Toggle Open (`.`) <-> Active (`=`).
-- `<leader>,`: Toggle Open (`.`) <-> Parked (`,`).
-- `<leader>q`: Toggle Open (`.`) <-> Question (`?`).
-- `<leader>A`: **Archive Note**. Moves current note to `archive/[type]/`.
+
+| Key | Action |
+|-----|--------|
+| `<leader>o` | Smart open (creates action, opens source, or follows link) |
+| `<leader>x` | Toggle Open ↔ Done |
+| `<leader>a` | Toggle Open ↔ Active |
+| `<leader>,` | Toggle Open ↔ Parked |
+| `<leader>q` | Toggle Open ↔ Question |
+| `<leader>A` | Archive current note |
+
+## Configuration
+
+Edit `~/.config/notat.sh/config.zsh`:
+
+```bash
+NOTES_BASE_DIR="$HOME/notes"                    # Notes location
+NOTES_DAILY_DATE_FORMAT="%Y-%m-%d"              # Daily note format
+NOTES_FZF_OPTS="--height=80% --border=rounded"  # FZF options
+```
+
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute introduction for beginners
+- **[docs/system-description.md](docs/system-description.md)** - Design philosophy and technical details
+- **[tests/README.md](tests/README.md)** - Test suite documentation
+
+## Health Check
+
+Verify your installation:
+
+```bash
+notat doctor
+```
+
+This checks:
+- All dependencies (required and optional)
+- Environment variables
+- Neovim integration
+- System configuration
+
+## Troubleshooting
+
+**"Command not found: notat"**
+- Run `source ~/.zshrc` or restart your terminal
+
+**"Vault already mounted"** (when using `--auto`)
+- This is normal on subsequent shells. Silent by design.
+
+**Preview not showing**
+- Check `bat` is installed: `which bat`
+- Try changing theme: `notat theme`
+
+**Git push fails**
+- Ensure remote repository exists
+- Check authentication: `ssh -T git@github.com`
+
+## Contributing
+
+Contributions welcome! Please read the [system description](docs/system-description.md) to understand the design philosophy first.
+
+## License
+
+MIT
