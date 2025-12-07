@@ -41,7 +41,7 @@ usage() {
     echo -e "${BOLD}Security & Environment${RESET}"
     echo -e "  env${RESET}         <cmd>           Manage environments (list, switch)"
     echo -e "  secure${RESET}      <cmd>           Manage encrypted vault (init, mount...)"
-    echo -e "  setup${RESET}       [env]           Onboarding wizard"
+    echo -e "  setup${RESET}       [env] [--force] Onboarding wizard"
     echo -e "  backup${RESET}      [env]           Quick sync (publish encrypted vault)"
     echo ""
     echo -e "${BOLD}System${RESET}"
