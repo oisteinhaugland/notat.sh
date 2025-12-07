@@ -23,19 +23,32 @@ for func in "$NOTES_SYSTEM_DIR/functions/"*.zsh; do
 done
 
 usage() {
-    echo "Usage: notat <command> [args]"
+    # ANSI Colors
+    local BOLD="\033[1m"
+    local CYAN="\033[36m"
+    local GREEN="\033[32m"
+    local YELLOW="\033[33m"
+    local RESET="\033[0m"
+
+    echo -e "${BOLD}Usage:${RESET} notat <command> [args]"
     echo ""
-    echo "Commands:"
-    echo "  new <type> [name]   Create a new note (daily, journal, people, resource, thought, action)"
-    echo "  search <type>       Search notes of a specific type"
-    echo "  pick <type>         Pick (find) a note file"
-    echo "  review <type>       Review notes interactively"
-    echo "  theme               Select preview theme"
-    echo "  backup              Backup notes (git sync)"
-    echo "  stats               Show system statistics"
-    echo "  prune               Prune empty files"
-    echo "  doctor              Run system health check"
-    echo "  help                Show this help"
+    echo -e "${BOLD}Note Management${RESET}"
+    echo -e "  n, new${RESET}      <type> [name]   Create a new note"
+    echo -e "  s, search${RESET}   <type>          Search notes"
+    echo -e "  p, pick${RESET}     <type>          Pick (find) a note file"
+    echo -e "  r, review${RESET}   <type>          Review notes (looped search)"
+    echo ""
+    echo -e "${BOLD}Security & Environment${RESET}"
+    echo -e "  env${RESET}         <cmd>           Manage environments (list, switch)"
+    echo -e "  secure${RESET}      <cmd>           Manage encrypted vault (init, mount...)"
+    echo -e "  setup${RESET}       [env]           Onboarding wizard"
+    echo -e "  backup${RESET}                      Quick sync (publish)"
+    echo ""
+    echo -e "${BOLD}System${RESET}"
+    echo -e "  theme${RESET}                       Select preview theme"
+    echo -e "  stats${RESET}                       Show statistics"
+    echo -e "  doctor${RESET}                      Health check"
+    echo -e "  help${RESET}                        Show this help"
     echo ""
     echo "Types:"
     echo "  daily, journal, people, resource, thought, action"
@@ -45,6 +58,36 @@ cmd="$1"
 shift || cmd="help"
 
 case "$cmd" in
+    setup)
+        note_setup "$@"
+        ;;
+    env)
+        subcmd="$1"
+        shift || { echo "Usage: notat env <list|switch>"; exit 1; }
+        func="note_env_${subcmd}"
+        if command -v "$func" &> /dev/null; then
+            "$func" "$@"
+        else
+            echo "Error: Unknown env command '$subcmd'."
+            exit 1
+        fi
+        ;;
+    secure)
+        subcmd="$1"
+        # If no subcommand, show usage
+        if [[ -z "$subcmd" ]]; then
+             echo "Usage: notat secure <init|mount|unmount|publish|recover|git-setup|passwd>"
+             exit 1
+        fi
+        shift
+        func="note_secure_${subcmd}"
+        if command -v "$func" &> /dev/null; then
+            "$func" "$@"
+        else
+            echo "Error: Unknown secure command '$subcmd'."
+            exit 1
+        fi
+        ;;
     new|n)
         type="$1"
         shift || { echo "Error: Missing type."; usage; exit 1; }

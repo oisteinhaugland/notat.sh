@@ -2,8 +2,18 @@
 # Configuration for Notetaking System
 
 # Default base directory for notes
-# Users can override this by setting NOTES_BASE_DIR before sourcing this file
-: ${NOTES_BASE_DIR:="$HOME/notes"}
+# Managed by 'notat env'
+if [[ -f "$HOME/.config/notat/state" ]]; then
+    ENV_NAME=$(cat "$HOME/.config/notat/state")
+    if [[ "$ENV_NAME" == "default" ]]; then
+        : ${NOTES_BASE_DIR:="$HOME/notes/personal"}
+    else
+        : ${NOTES_BASE_DIR:="$HOME/notes/$ENV_NAME"}
+    fi
+else
+    # Fallback/First Run
+    : ${NOTES_BASE_DIR:="$HOME/notes/personal"}
+fi
 
 # Subdirectories
 export NOTES_DAILY_DIR="$NOTES_BASE_DIR/daily"
