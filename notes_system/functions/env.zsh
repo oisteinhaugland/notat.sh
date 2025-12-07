@@ -67,3 +67,19 @@ note_env_switch() {
     echo "IMPORTANT: To apply changes to your current shell session, run:"
     echo "source \"\$NOTES_SYSTEM_DIR/config.zsh\""
 }
+
+# Help for env commands
+note_env_help() {
+    cat <<EOF
+Usage: notat env <command>
+
+Commands:
+  list              List all available environments
+  switch <name>     Switch to environment <name>
+
+Examples:
+  notat env list
+  notat env switch work
+  notat env switch personal
+EOF
+}

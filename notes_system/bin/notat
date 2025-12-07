@@ -42,17 +42,20 @@ usage() {
     echo -e "  env${RESET}         <cmd>           Manage environments (list, switch)"
     echo -e "  secure${RESET}      <cmd>           Manage encrypted vault (init, mount...)"
     echo -e "  setup${RESET}       [env]           Onboarding wizard"
-    echo -e "  backup${RESET}                      Quick sync (publish)"
+    echo -e "  backup${RESET}      [env]           Quick sync (publish encrypted vault)"
     echo ""
     echo -e "${BOLD}System${RESET}"
     echo -e "  theme${RESET}                       Select preview theme"
-    echo -e "  stats${RESET}                       Show statistics"
+    echo -e "  stats${RESET}       [env]           Show statistics"
     echo -e "  doctor${RESET}                      Health check"
     echo -e "  help${RESET}                        Show this help"
     echo ""
     echo "Types:"
     echo "  daily, journal, people, resource, thought, action"
+    echo ""
+    echo "Use 'notat <command> --help' for more information on a command."
 }
+
 
 cmd="$1"
 shift || cmd="help"
@@ -63,45 +66,76 @@ case "$cmd" in
         ;;
     env)
         subcmd="$1"
-        shift || { echo "Usage: notat env <list|switch>"; exit 1; }
+        shift || { note_env_help; exit 1; }
+        
+        # Check for help flag
+        if [[ "$subcmd" == "--help" || "$subcmd" == "-h" ]]; then
+            note_env_help
+            exit 0
+        fi
+        
         func="note_env_${subcmd}"
         if command -v "$func" &> /dev/null; then
             "$func" "$@"
         else
             echo "Error: Unknown env command '$subcmd'."
+            note_env_help
             exit 1
         fi
         ;;
     secure)
         subcmd="$1"
-        # If no subcommand, show usage
+        # If no subcommand, show help
         if [[ -z "$subcmd" ]]; then
-             echo "Usage: notat secure <init|mount|unmount|publish|recover|git-setup|passwd>"
+             note_secure_help
              exit 1
         fi
+        
+        # Check for help flag
+        if [[ "$subcmd" == "--help" || "$subcmd" == "-h" ]]; then
+            note_secure_help
+            exit 0
+        fi
+        
         shift
         func="note_secure_${subcmd}"
         if command -v "$func" &> /dev/null; then
             "$func" "$@"
         else
             echo "Error: Unknown secure command '$subcmd'."
+            note_secure_help
             exit 1
         fi
         ;;
     new|n)
         type="$1"
-        shift || { echo "Error: Missing type."; usage; exit 1; }
+        shift || { 
+            echo "Error: Missing type."
+            echo "Usage: notat new <type> [name]"
+            echo "Available types: daily, journal, people, resource, thought, action"
+            echo ""
+            echo "Examples:"
+            echo "  notat new daily"
+            echo "  notat new action 'Fix bug'"
+            exit 1
+        }
         func="note_${type}_create"
         if command -v "$func" &> /dev/null; then
             "$func" "$@"
         else
             echo "Error: Unknown type '$type'."
+            echo "Available types: daily, journal, people, resource, thought, action"
             exit 1
         fi
         ;;
     search|s)
         type="$1"
-        shift || { echo "Error: Missing type."; usage; exit 1; }
+        shift || {
+            echo "Error: Missing type."
+            echo "Usage: notat search <type>"
+            echo "Available types: daily, journal, people, resource, thought, action"
+            exit 1
+        }
         # Handle action-note special case
         if [[ "$type" == "action-note" ]]; then
             note_action_note_search "$@"
@@ -111,24 +145,36 @@ case "$cmd" in
                 "$func" "$@"
             else
                 echo "Error: Unknown type '$type'."
+                echo "Available types: daily, journal, people, resource, thought, action"
                 exit 1
             fi
         fi
         ;;
     pick|p)
         type="$1"
-        shift || { echo "Error: Missing type."; usage; exit 1; }
+        shift || {
+            echo "Error: Missing type."
+            echo "Usage: notat pick <type>"
+            echo "Available types: daily, journal, people, resource, thought, action"
+            exit 1
+        }
         func="note_${type}_pick"
         if command -v "$func" &> /dev/null; then
             "$func" "$@"
         else
             echo "Error: Unknown type '$type'."
+            echo "Available types: daily, journal, people, resource, thought, action"
             exit 1
         fi
         ;;
     review|r)
         type="$1"
-        shift || { echo "Error: Missing type."; usage; exit 1; }
+        shift || {
+            echo "Error: Missing type."
+            echo "Usage: notat review <type>"
+            echo "Available types: daily, journal, people, resource, thought, action"
+            exit 1
+        }
         # Handle action-note special case
         if [[ "$type" == "action-note" ]]; then
             note_action_note_review "$@"
@@ -138,6 +184,7 @@ case "$cmd" in
                 "$func" "$@"
             else
                 echo "Error: Unknown type '$type'."
+                echo "Available types: daily, journal, people, resource, thought, action"
                 exit 1
             fi
         fi
@@ -146,7 +193,9 @@ case "$cmd" in
         note_theme
         ;;
     backup)
-        note_backup "${2:-}"
+        # Backup current environment (or specified environment)
+        env="${1:-$(note_env_current)}"
+        note_secure_publish "$env"
         ;;
     stats)
         note_stats

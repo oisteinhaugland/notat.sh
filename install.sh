@@ -103,6 +103,7 @@ fi
 check_deps() {
     say "Checking dependencies..."
     local deps=(rg fzf bat fd git)
+    local optional_deps=(gocryptfs)
     local missing=()
 
     for dep in "${deps[@]}"; do
@@ -115,6 +116,13 @@ check_deps() {
     else
         ok "All dependencies found."
     fi
+    
+    # Check optional dependencies
+    for dep in "${optional_deps[@]}"; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            warn "Optional: $dep not found (required for encrypted vaults)"
+        fi
+    done
 }
 
 check_deps

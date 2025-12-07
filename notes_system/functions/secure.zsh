@@ -10,6 +10,29 @@ _check_gocryptfs() {
     fi
 }
 
+# Help for secure commands
+note_secure_help() {
+    cat <<EOF
+Usage: notat secure <command> [args]
+
+Commands:
+  init [env]                Initialize encrypted vault
+  mount [env] [--auto]      Mount encrypted vault
+  unmount [env]             Unmount encrypted vault
+  publish [env] [remote]    Publish (git push) encrypted vault
+  git-setup <env> <url>     Configure git remote for vault
+  recover <env> <url>       Clone existing encrypted vault
+  passwd [env]              Change vault password
+  key-gen [env]             Generate keyfile for auto-mount
+
+Examples:
+  notat secure init personal
+  notat secure mount personal --auto
+  notat secure publish personal
+  notat secure git-setup work git@github.com:user/vault.git
+EOF
+}
+
 # Initialize a new secure vault
 note_secure_init() {
     _check_gocryptfs || return 1
@@ -62,7 +85,8 @@ note_secure_mount() {
     
     # Check if already mounted
     if mount | grep -q "$plain_dir"; then
-        echo "Already mounted: $plain_dir"
+        # Silent in auto mode when already mounted, verbose otherwise
+        [[ "$mode" != "auto" ]] && echo "Already mounted: $plain_dir"
         return 0
     fi
     
@@ -178,7 +202,23 @@ note_secure_git_setup() {
     
     if [[ -z "$name" || -z "$url" ]]; then
         echo "Usage: notat secure git-setup <env> <git_url>"
+        echo ""
+        echo "Example URLs:"
+        echo "  git@github.com:username/repo.git"
+        echo "  https://github.com/username/repo.git"
         return 1
+    fi
+    
+    # Validate URL format
+    if [[ ! "$url" =~ ^(git@|https://) ]]; then
+        echo "⚠️  Warning: URL doesn't look like a standard git URL."
+        echo "Expected format: git@... or https://..."
+        echo -n "Continue anyway? [y/N]: "
+        read -r confirm
+        if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            return 1
+        fi
     fi
     
     local cipher_dir="$HOME/.notes-encrypted/$name"
@@ -221,8 +261,21 @@ note_secure_git_setup() {
         git config user.email "$git_email"
     fi
     
-    echo "✅ Git Setup Complete."
+    echo ""
+    echo "Setting up upstream tracking..."
+    git add .
+    git commit --allow-empty -m "Initial setup"
+    
+    if git push -u origin main; then
+        echo "✅ Git Setup Complete. Upstream tracking configured."
+    else
+        echo "⚠️  Push failed. You may need to:"
+        echo "  - Create the repository on the remote"
+        echo "  - Check your authentication credentials"
+        echo "Run 'notat secure publish $name' after fixing."
+    fi
 }
+
 
 # Recover (Git Clone Encrypted Repo)
 note_secure_recover() {

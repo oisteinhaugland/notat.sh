@@ -30,33 +30,41 @@ note_backup() {
 
 # 2. Stats (Counts)
 note_stats() {
+    local target_env="${1:-$(note_env_current)}"
+    local base_dir="$HOME/notes/$target_env"
+    
     note_check_deps || return 1
     
-    echo "📊 Notat Stats:"
+    if [[ ! -d "$base_dir" ]]; then
+        echo "Error: Environment '$target_env' does not exist at $base_dir"
+        return 1
+    fi
+    
+    echo "📊 Notat Stats for: $target_env"
     echo "----------------"
     
-    # Count files in standard directories
-    local dirs=(daily thoughts actions journals people resources archive)
+    # Count files in standard directories with aligned output (alphabetically sorted)
+    local dirs=(actions archive daily journals people resources thoughts)
     for dir in "${dirs[@]}"; do
         local count=0
-        if [[ -d "$NOTES_BASE_DIR/$dir" ]]; then
-            count=$(fd . "$NOTES_BASE_DIR/$dir" --type f | wc -l)
+        if [[ -d "$base_dir/$dir" ]]; then
+            count=$(fd . "$base_dir/$dir" --type f | wc -l)
         fi
-        echo "  $dir: $count notes"
+        printf "  %11s: %3d notes\n" "$dir" "$count"
     done
 
     echo ""
     echo "  Task Summary:"
     echo "  -------------"
     
-    if [[ -d "$NOTES_BASE_DIR" ]]; then
+    if [[ -d "$base_dir" ]]; then
         # Count occurrences of task markers at start of line
         # Markers: . (Open), = (Active), , (Parked), > (Waiting), ? (Question), x (Done)
-        rg --no-heading --no-line-number --no-filename -o "^\s*([.=>?,x])" "$NOTES_BASE_DIR" 2>/dev/null \
+        rg --no-heading --no-line-number --no-filename -o "^\s*([.=>,?x])" "$base_dir" 2>/dev/null \
             | sed 's/^\s*//' \
             | sort \
             | uniq -c \
-            | awk '{print "    " $2 ": " $1}'
+            | awk '{printf "    %-3s %3d\n", $2":", $1}'
     fi
 }
 
@@ -111,6 +119,13 @@ note_health() {
             ((errors++))
         fi
     done
+    
+    # Check optional deps
+    if command -v gocryptfs &> /dev/null; then
+        echo "  [OK] gocryptfs found: $(command -v gocryptfs)"
+    else
+        echo "  [WARN] gocryptfs NOT found (required for encrypted vaults)"
+    fi
     echo ""
 
     # 2. Check Environment Variables
