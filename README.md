@@ -47,9 +47,9 @@ Track tasks across *all* your notes with simple markers:
 | `. ` | Open | `. Call dentist` |
 | `= ` | Active (doing now) | `= Write proposal` |
 | `x ` | Done | `x Finished taxes` |
-| `, ` | Parked (later) | `, Learn Rust` |
+| `, ` | Parked (later) | `, Read that book` |
 | `> ` | Waiting/Blocked | `> Waiting for feedback` |
-| `? ` | Question | `? How does async work?` |
+| `? ` | Question | `? What was the decision?` |
 
 Toggle states with Neovim keybindings or just edit the marker manually.
 
@@ -68,6 +68,15 @@ Secure your notes with `gocryptfs`:
 - Multiple environments (work/personal)
 - Git sync for encrypted backups
 - Auto-mount with keyfiles
+
+### Unified CLI
+A comprehensive `notat` command for system management:
+- **Setup wizard**: `notat setup` - Interactive environment creation
+- **Environment switching**: `notat env switch work/personal`
+- **Security management**: `notat secure mount/unmount/publish`
+- **Health checks**: `notat doctor` - Verify dependencies and configuration
+- **Statistics**: `notat stats` - View notes and task metrics
+- **Auto-configured aliases**: 2-3 letter shortcuts automatically added to your shell (`nd`, `nt`, `sa`, `ra`, etc.)
 
 ### Customizable Themes
 Pick your preview theme: `notat theme`
@@ -119,7 +128,7 @@ nt          # Create a timestamped thought
 
 ```bash
 sa          # Search all active tasks
-st docker   # Search thoughts for "docker"
+st meeting  # Search thoughts for "meeting"
 oa          # Open the first active (=) task
 ```
 
