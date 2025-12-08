@@ -49,6 +49,40 @@ run_cmd() {
 }
 
 ############################################################
+# Cross-platform path resolution (readlink -f not on macOS)
+############################################################
+get_real_path() {
+    local path="$1"
+    
+    # Try realpath (available on most modern systems)
+    if command -v realpath > /dev/null 2>&1; then
+        realpath "$path" 2>/dev/null && return 0
+    fi
+    
+    # Try readlink -f (Linux)
+    if readlink -f "$path" 2>/dev/null; then
+        return 0
+    fi
+    
+    # macOS fallback: use pwd with cd
+    if [[ -d "$path" ]]; then
+        (cd "$path" && pwd)
+    elif [[ -L "$path" ]]; then
+        # For symlinks, resolve recursively
+        local target
+        target=$(readlink "$path")
+        if [[ "$target" == /* ]]; then
+            echo "$target"
+        else
+            echo "$(dirname "$path")/$target"
+        fi
+    else
+        # Last resort: return as-is
+        echo "$path"
+    fi
+}
+
+############################################################
 # Help
 ############################################################
 show_help() {
@@ -296,7 +330,7 @@ if [[ -n "$TEMP_INSTALL_LOG" && -f "$TEMP_INSTALL_LOG" ]]; then
     # Determine final log location
     if [[ -L "$INSTALL_DIR" ]]; then
         # If it's a symlink, put log in the actual directory
-        FINAL_LOG="$(readlink -f "$INSTALL_DIR")/install.log"
+        FINAL_LOG="$(get_real_path "$INSTALL_DIR")/install.log"
     else
         FINAL_LOG="$INSTALL_DIR/install.log"
     fi

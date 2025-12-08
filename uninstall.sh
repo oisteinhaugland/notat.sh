@@ -26,6 +26,22 @@ warn()  { color "33" "$@"; }
 error() { color "31" "$@"; }
 
 ############################################################
+# Cross-platform sed in-place editing
+############################################################
+sed_inplace() {
+    local pattern="$1"
+    local file="$2"
+    
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # macOS requires empty string after -i
+        sed -i '' "$pattern" "$file" 2>/dev/null || true
+    else
+        # Linux uses -i directly
+        sed -i "$pattern" "$file" 2>/dev/null || true
+    fi
+}
+
+############################################################
 # Confirm action
 ############################################################
 read -rp "Uninstall Notat.sh? [y/N] " ans
@@ -57,7 +73,7 @@ remove_source_lines() {
 
     # Remove the "# Notat.sh" line and the line below it (the source line)
     # If the lines are absent, sed does nothing.
-    sed -i '/# Notat.sh/,+1d' "$file" 2>/dev/null || true
+    sed_inplace '/# Notat.sh/,+1d' "$file"
 }
 
 for cfg in \
@@ -70,6 +86,41 @@ do
         ok "Cleaned config: $cfg"
     fi
 done
+
+############################################################
+# Remove Neovim integration (if exists)
+############################################################
+info "Checking for Neovim integration..."
+
+NVIM_CLEANED=false
+
+# Remove symlink
+if [[ -L "$HOME/.config/nvim/lua/notat.lua" ]]; then
+    rm "$HOME/.config/nvim/lua/notat.lua"
+    ok "Removed Neovim symlink: ~/.config/nvim/lua/notat.lua"
+    NVIM_CLEANED=true
+fi
+
+# Remove config file
+if [[ -f "$HOME/.config/nvim/lua/notat_config.lua" ]]; then
+    rm "$HOME/.config/nvim/lua/notat_config.lua"
+    ok "Removed Neovim config: ~/.config/nvim/lua/notat_config.lua"
+    NVIM_CLEANED=true
+fi
+
+# Remove require lines from init.lua
+if [[ -f "$HOME/.config/nvim/init.lua" ]]; then
+    # Remove any lines that require notat modules
+    if grep -q "require.*notat" "$HOME/.config/nvim/init.lua" 2>/dev/null; then
+        sed_inplace '/require.*notat/d' "$HOME/.config/nvim/init.lua"
+        ok "Cleaned Neovim init.lua"
+        NVIM_CLEANED=true
+    fi
+fi
+
+if ! $NVIM_CLEANED; then
+    info "No Neovim integration found."
+fi
 
 ############################################################
 # Final message
