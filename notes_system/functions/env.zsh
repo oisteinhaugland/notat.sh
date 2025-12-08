@@ -64,8 +64,6 @@ note_env_switch() {
     echo "$name" > "$HOME/.config/notat/state"
     
     echo "Switched to environment: $name"
-    echo "IMPORTANT: To apply changes to your current shell session, run:"
-    echo "source \"\$NOTES_SYSTEM_DIR/config.zsh\""
 }
 
 # Help for env commands

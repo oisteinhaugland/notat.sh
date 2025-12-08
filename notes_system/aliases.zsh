@@ -1,6 +1,29 @@
 # Intended for zsh
 # Aliases for Notetaking System
 
+# Wrapper function for notat command
+# This is needed to handle 'env switch' in the current shell (not subprocess)
+notat() {
+    # Special case: env switch needs to run in current shell
+    if [[ "$1" == "env" && "$2" == "switch" ]]; then
+        local env_name="$3"
+        if [[ -z "$env_name" ]]; then
+            echo "Usage: notat env switch <name>"
+            return 1
+        fi
+        
+        # Call the function directly in current shell
+        note_env_switch "$env_name" && source "$NOTES_SYSTEM_DIR/config.zsh"
+        return $?
+    fi
+    
+    # For all other commands, call the notat binary
+    command notat "$@"
+}
+
+# Short alias for environment switching
+alias ne='notat env switch'
+
 # Search
 alias sd='note_daily_search'
 alias st='note_thought_search'

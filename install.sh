@@ -84,9 +84,13 @@ done
 # Startup
 ############################################################
 say "Installing Notat.sh..."
-mkdir -p "$INSTALL_DIR"
 
-# Start logging
+# Use temporary log location during installation
+# This prevents creating INSTALL_DIR before checking if it exists
+TEMP_INSTALL_LOG="/tmp/notat-install-$(date +%s).log"
+LOGFILE="$TEMP_INSTALL_LOG"
+
+# Start logging to temp location
 exec > >(tee -a "$LOGFILE") 2>&1
 
 ############################################################
@@ -98,31 +102,55 @@ if [[ ! -d "$REPO_DIR" ]]; then
 fi
 
 ############################################################
-# Dependency Check (non-fatal)
+# Dependency Check (fatal on missing critical deps)
 ############################################################
-check_deps() {
-    say "Checking dependencies..."
-    local deps=(rg fzf bat fd git)
-    local optional_deps=(gocryptfs)
-    local missing=()
-
-    for dep in "${deps[@]}"; do
-        command -v "$dep" >/dev/null 2>&1 || missing+=("$dep")
-    done
-
-    if (( ${#missing[@]} )); then
-        warn "Missing dependencies: ${missing[*]}"
-        warn "Install them manually for full functionality."
-    else
-        ok "All dependencies found."
+check_command() {
+    local cmd="$1"
+    shift
+    local alternatives=("$@")
+    
+    # Check primary command
+    if command -v "$cmd" > /dev/null 2>&1; then
+        return 0
     fi
     
-    # Check optional dependencies
-    for dep in "${optional_deps[@]}"; do
-        if ! command -v "$dep" >/dev/null 2>&1; then
-            warn "Optional: $dep not found (required for encrypted vaults)"
+    # Check alternatives
+    for alt in "${alternatives[@]}"; do
+        if command -v "$alt" > /dev/null 2>&1; then
+            return 0
         fi
     done
+    
+    return 1
+}
+
+check_deps() {
+    say "Checking dependencies..."
+    local missing=()
+
+    # Check each dependency with alternatives
+    check_command rg || missing+=("ripgrep (rg)")
+    check_command fzf || missing+=("fzf")
+    check_command bat batcat || missing+=("bat")
+    check_command fd fdfind fd-find || missing+=("fd")
+    check_command git || missing+=("git")
+
+    if (( ${#missing[@]} )); then
+        error "Missing critical dependencies: ${missing[*]}"
+        error ""
+        error "Install them before continuing:"
+        error "  macOS:  brew install ripgrep fzf bat fd git"
+        error "  Ubuntu: apt install ripgrep fzf bat fd-find git"
+        error "  Arch:   pacman -S ripgrep fzf bat fd git"
+        exit 1
+    fi
+    
+    ok "All dependencies found."
+    
+    # Check optional dependencies
+    if ! check_command gocryptfs; then
+        warn "Optional: gocryptfs not found (required for encrypted vaults)"
+    fi
 }
 
 check_deps
@@ -141,7 +169,7 @@ ensure_symlink() {
         backup="${INSTALL_DIR}.backup.$(date +%s)"
         warn "Backing up existing directory to $backup"
         run_cmd mv "$INSTALL_DIR" "$backup"
-        run_cmd mkdir -p "$INSTALL_DIR"
+        run_cmd mkdir -p "$(dirname "$INSTALL_DIR")"
     fi
 
     # If it's a symlink but to the wrong place
@@ -166,18 +194,43 @@ ensure_symlink
 # Detect Shell and Config File
 ############################################################
 detect_shell_config() {
-    if [[ -n "${ZSH_VERSION:-}" ]]; then echo "$HOME/.zshrc" && return; fi
-    if [[ -n "${BASH_VERSION:-}" ]]; then echo "$HOME/.bashrc" && return; fi
-
+    # Check SHELL environment variable (more reliable than version vars in installer context)
     case "${SHELL:-}" in
-        */zsh)  echo "$HOME/.zshrc";;
-        */bash) echo "$HOME/.bashrc";;
-        */fish) echo "$HOME/.config/fish/config.fish";;
-        *) echo "";;
+        */zsh)  echo "$HOME/.zshrc" && return;;
+        */bash) echo "$HOME/.bashrc" && return;;
+        */fish) echo "$HOME/.config/fish/config.fish" && return;;
+    esac
+    
+    # If SHELL isn't set or is unknown, return empty for interactive prompt
+    echo ""
+}
+
+prompt_shell_choice() {
+    local choice
+    echo ""
+    echo "Which shell do you use?"
+    echo "  1) zsh"
+    echo "  2) bash"
+    echo "  3) fish"
+    echo "  4) other (manual setup required)"
+    echo ""
+    read -rp "Enter choice [1-4]: " choice
+    
+    case "$choice" in
+        1) echo "$HOME/.zshrc";;
+        2) echo "$HOME/.bashrc";;
+        3) echo "$HOME/.config/fish/config.fish";;
+        4) echo "";;
+        *) echo "" && warn "Invalid choice. Manual setup required.";;
     esac
 }
 
 CONFIG_FILE="$(detect_shell_config)"
+
+# If detection failed, prompt user
+if [[ -z "$CONFIG_FILE" ]]; then
+    CONFIG_FILE="$(prompt_shell_choice)"
+fi
 
 ############################################################
 # Add source line idempotently
@@ -213,15 +266,98 @@ fi
 ############################################################
 # Neovim Setup Prompt
 ############################################################
-echo ""
-read -rp "Do you want to set up Neovim integration? [y/N] " nvim_ans
-if [[ "$nvim_ans" =~ ^[Yy]$ ]]; then
-    if [[ -f "$REPO_DIR/setup_nvim.sh" ]]; then
-        run_cmd "$REPO_DIR/setup_nvim.sh"
-    else
-        warn "setup_nvim.sh not found."
+# Check if Neovim integration already exists
+NVIM_ALREADY_SETUP=false
+if [[ -L "$HOME/.config/nvim/lua/notat.lua" ]]; then
+    existing_target=$(readlink "$HOME/.config/nvim/lua/notat.lua")
+    expected_target="$REPO_DIR/nvim_integration.lua"
+    if [[ "$existing_target" == "$expected_target" ]]; then
+        NVIM_ALREADY_SETUP=true
+        ok "Neovim integration already configured."
     fi
 fi
+
+if ! $NVIM_ALREADY_SETUP; then
+    echo ""
+    read -rp "Do you want to set up Neovim integration? [y/N] " nvim_ans
+    if [[ "$nvim_ans" =~ ^[Yy]$ ]]; then
+        if [[ -f "$REPO_DIR/setup_nvim.sh" ]]; then
+            run_cmd "$REPO_DIR/setup_nvim.sh"
+        else
+            warn "setup_nvim.sh not found."
+        fi
+    fi
+fi
+
+############################################################
+# Move log to final location
+############################################################
+if [[ -n "$TEMP_INSTALL_LOG" && -f "$TEMP_INSTALL_LOG" ]]; then
+    # Determine final log location
+    if [[ -L "$INSTALL_DIR" ]]; then
+        # If it's a symlink, put log in the actual directory
+        FINAL_LOG="$(readlink -f "$INSTALL_DIR")/install.log"
+    else
+        FINAL_LOG="$INSTALL_DIR/install.log"
+    fi
+    
+    mkdir -p "$(dirname "$FINAL_LOG")"
+    cp "$TEMP_INSTALL_LOG" "$FINAL_LOG" 2>/dev/null || true
+    rm -f "$TEMP_INSTALL_LOG"
+    LOGFILE="$FINAL_LOG"
+    info "Installation log saved to: $FINAL_LOG"
+fi
+
+############################################################
+# Post-Install Validation
+############################################################
+validate_installation() {
+    local errors=()
+    
+    say ""
+    say "Validating installation..."
+    
+    # Check symlink
+    if [[ ! -L "$INSTALL_DIR" ]]; then
+        errors+=("Symlink not created at $INSTALL_DIR")
+    elif [[ "$(readlink "$INSTALL_DIR")" != "$REPO_DIR" ]]; then
+        errors+=("Symlink points to wrong location")
+    fi
+    
+    # Check core files exist
+    if [[ ! -f "$REPO_DIR/init.zsh" ]]; then
+        errors+=("Core file missing: init.zsh")
+    fi
+    
+    if [[ ! -f "$REPO_DIR/config.zsh" ]]; then
+        errors+=("Core file missing: config.zsh")
+    fi
+    
+    # Check shell config was updated (if applicable)
+    if [[ -n "$CONFIG_FILE" && -f "$CONFIG_FILE" ]]; then
+        if ! grep -Fq "source \"$INSTALL_DIR/init.zsh\"" "$CONFIG_FILE"; then
+            errors+=("Shell config not updated: $CONFIG_FILE")
+        fi
+    fi
+    
+    # Report results
+    if (( ${#errors[@]} )); then
+        error "Validation failed:"
+        for err in "${errors[@]}"; do
+            error "  - $err"
+        done
+        return 1
+    else
+        ok "Validation passed!"
+        return 0
+    fi
+}
+
+validate_installation || {
+    error "Installation completed with errors. Please review the log:"
+    error "  $LOGFILE"
+    exit 1
+}
 
 ok "Installation complete!"
 say "Restart your shell or run: source \"$CONFIG_FILE\""

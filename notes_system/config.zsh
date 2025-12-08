@@ -3,16 +3,17 @@
 
 # Default base directory for notes
 # Managed by 'notat env'
+# Always re-evaluate state file to support dynamic environment switching
 if [[ -f "$HOME/.config/notat/state" ]]; then
     ENV_NAME=$(cat "$HOME/.config/notat/state")
     if [[ "$ENV_NAME" == "default" ]]; then
-        : ${NOTES_BASE_DIR:="$HOME/notes/personal"}
+        export NOTES_BASE_DIR="$HOME/notes/personal"
     else
-        : ${NOTES_BASE_DIR:="$HOME/notes/$ENV_NAME"}
+        export NOTES_BASE_DIR="$HOME/notes/$ENV_NAME"
     fi
 else
     # Fallback/First Run
-    : ${NOTES_BASE_DIR:="$HOME/notes/personal"}
+    export NOTES_BASE_DIR="$HOME/notes/personal"
 fi
 
 # Subdirectories
@@ -43,7 +44,8 @@ export EDITOR="${EDITOR:-vim}"
 
 # FZF Configuration
 # Common options for all FZF interactions
-export NOTES_FZF_OPTS="--ansi --delimiter : --layout=reverse --border --height=80%"
+# Note: Delimiter is set per-function as needed, not globally
+export NOTES_FZF_OPTS="--ansi --layout=reverse --border --height=80%"
 
 # Bat Theme for Previews
 # A high-contrast theme is recommended for better line highlighting
