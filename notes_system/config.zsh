@@ -45,7 +45,8 @@ export EDITOR="${EDITOR:-vim}"
 # FZF Configuration
 # Common options for all FZF interactions
 # Note: Delimiter is set per-function as needed, not globally
-export NOTES_FZF_OPTS="--ansi --layout=reverse --border --height=80%"
+export NOTES_FZF_OPTS=(--ansi --layout=reverse --border --height=80%)
+
 
 # Bat Theme for Previews
 # A high-contrast theme is recommended for better line highlighting
