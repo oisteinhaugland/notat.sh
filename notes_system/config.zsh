@@ -55,3 +55,10 @@ export NOTES_BAT_THEME="${NOTES_BAT_THEME:-Visual Studio Dark+}"
 # FZF Preview Window Configuration
 # Default to vertical split (right side)
 export NOTES_FZF_PREVIEW_WINDOW="${NOTES_FZF_PREVIEW_WINDOW:-right,50%,border-left}"
+
+# Search Patterns
+# Regex patterns for finding action items
+export NOTES_PATTERN_ACTIVE='^[.=>?]'
+export NOTES_PATTERN_ACTIVE_ALL='^(\s*)[.=>?]'
+export NOTES_PATTERN_BACKLOG='^,'
+export NOTES_PATTERN_BACKLOG_ALL='^\s*,'

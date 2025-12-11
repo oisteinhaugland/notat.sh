@@ -34,16 +34,16 @@ alias st='note_thought_search'
 # We exclude lines starting with whitespace (handled by saa)
 # We need to be careful with > because it's also used for blockquotes/source links.
 # Assuming actions are like "> Waiting", we match that.
-alias sa='note_search_pattern "^[.=>?]" "$NOTES_BASE_DIR"'
+alias sa='note_search_pattern "$NOTES_PATTERN_ACTIVE" "$NOTES_BASE_DIR"'
 
 # saa: Search ALL active actions (including indented)
-alias saa='note_search_pattern "^(\s*)[.=>?]" "$NOTES_BASE_DIR"'
+alias saa='note_search_pattern "$NOTES_PATTERN_ACTIVE_ALL" "$NOTES_BASE_DIR"'
 
 # sab: Search backlog/parked actions (,)
-alias sab='note_search_pattern "^," "$NOTES_BASE_DIR"'
+alias sab='note_search_pattern "$NOTES_PATTERN_BACKLOG" "$NOTES_BASE_DIR"'
 
 # saab: Search all backlog/parked actions (including indented)
-alias saab='note_search_pattern "^\s*," "$NOTES_BASE_DIR"'
+alias saab='note_search_pattern "$NOTES_PATTERN_BACKLOG_ALL" "$NOTES_BASE_DIR"'
 
 alias sj='note_journal_search'
 alias sp='note_people_search'
